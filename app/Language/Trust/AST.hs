@@ -6,4 +6,4 @@ where
 import Language.Trust.Fun (Fun)
 
 data AST
-  = AST String Fun
+  = AST String [Fun]

@@ -3,16 +3,14 @@ module Language.Trust.Program.Builder
   )
 where
 
-import Control.Lens (assign, modifying, view)
-import Data.Map (insert)
+import Control.Lens (assign)
+import Control.Monad (forM_)
 import Language.Trust.AST (AST (..))
 import Language.Trust.Builder (Builder)
-import Language.Trust.Fun (header)
-import qualified Language.Trust.Fun.Header as H
-import Language.Trust.Program (Program, funs, name)
+import Language.Trust.Program (Program, name)
+import Language.Trust.Program.Builder.AddFun (addFun)
 
 programBuilder :: AST -> Builder Program
-programBuilder (AST n f) = do
+programBuilder (AST n fs) = do
   assign name n
-  modifying funs $
-    insert (view (header . H.name) f) f
+  forM_ fs addFun

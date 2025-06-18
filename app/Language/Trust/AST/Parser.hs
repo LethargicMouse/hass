@@ -3,6 +3,7 @@ module Language.Trust.AST.Parser
   )
 where
 
+import Control.Applicative (many)
 import Control.Lens (use)
 import Language.Parser (Parser)
 import Language.Parser.State (srcName)
@@ -14,5 +15,5 @@ ast :: Parser AST
 ast =
   AST
     <$> use srcName
-    <*> fun
+    <*> many fun
     <* eof

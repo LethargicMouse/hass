@@ -1,3 +1,11 @@
 fn main() {
   trust()
 }
+
+fn trust() {
+  
+}
+
+fn trust () {
+  
+}
