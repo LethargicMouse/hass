@@ -7,6 +7,7 @@ import Control.Applicative ((<|>))
 import Language.Parser (Parser)
 import Language.Parser.Util.Name (name)
 import Language.Parser.Util.Str (str)
+import Language.Parser.Util.Viewed (viewed)
 import Language.Trust.Expr
   ( Block (..),
     Call (..),
@@ -26,4 +27,8 @@ expr =
     <|> CallExpr <$> call
 
 call :: Parser Call
-call = Call <$ name <* str "(" <* str ")"
+call =
+  uncurry Call
+    <$> viewed name
+    <* str "("
+    <* str ")"

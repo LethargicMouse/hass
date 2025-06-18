@@ -1,10 +1,18 @@
+{-# LANGUAGE TemplateHaskell #-}
+
 module Language.IR.Program
   ( Program (..),
+    funs,
   )
 where
 
+import Control.Lens (makeLenses)
 import Data.Map (Map)
 import Language.IR.Fun (Fun)
 
 newtype Program
-  = Program (Map String Fun)
+  = Program
+  { _funs :: Map String Fun
+  }
+
+makeLenses ''Program

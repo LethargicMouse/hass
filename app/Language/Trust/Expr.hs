@@ -5,6 +5,8 @@ module Language.Trust.Expr
   )
 where
 
+import Language.View (View)
+
 data Expr
   = Unit
   | CallExpr Call
@@ -13,4 +15,4 @@ newtype Block
   = Block Expr
 
 data Call
-  = Call
+  = Call View String

@@ -54,7 +54,7 @@ underline :: Int -> Int -> String
 underline s e =
   "\n     |"
     ++ replicate s ' '
-    ++ replicate (e - s + 1) '`'
+    ++ replicate (e - s) '`'
 
 line :: Int -> String -> String
 line i s = '\n' : leftPad 4 ' ' (show i) ++ " | " ++ s

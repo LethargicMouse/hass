@@ -10,10 +10,11 @@ import Language.Parser (Parser)
 import Language.Parser.Error (Error (..))
 import Language.Parser.State.Pos (pos)
 import Language.Parser.Util.View (view)
+import Language.Source.Pos (Pos (..))
 
 failParse :: String -> Parser a
 failParse msg = do
-  p <- gets pos
-  v <- view p p
+  Pos l s <- gets pos
+  v <- view (Pos l s) (Pos l $ s + 1)
   tell (Error v [msg])
   throwError ()

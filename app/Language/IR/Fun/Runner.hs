@@ -9,4 +9,4 @@ import Language.IR.Fun (Fun (..))
 import Language.IR.Runner (Runner)
 
 fun :: Fun -> Runner Expr
-fun (Fun ret) = expr ret
+fun (Fun r) = expr r
