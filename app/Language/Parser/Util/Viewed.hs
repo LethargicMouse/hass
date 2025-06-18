@@ -16,7 +16,6 @@ viewed p = skipSpace >> viewed' p
 
 viewed' :: Parser a -> Parser (View, a)
 viewed' p = do
-  skipSpace
   s <- gets pos
   res <- p
   e <- gets pos

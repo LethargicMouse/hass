@@ -1,11 +1,11 @@
-fn main() {
-  trust()
+fn main(args) {
+  trust(args)
 }
 
-fn trust() {
-  
+fn trust(args) {
+  process(args)
 }
 
-fn trust () {
+fn process(args) {
   
 }

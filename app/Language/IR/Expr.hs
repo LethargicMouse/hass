@@ -6,3 +6,4 @@ where
 data Expr
   = Unit
   | Call String
+  | VarExpr String

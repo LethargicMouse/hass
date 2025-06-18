@@ -12,6 +12,7 @@ import Language.Trust.Expr
   ( Block (..),
     Call (..),
     Expr (..),
+    Var (..),
   )
 
 block :: Parser Block
@@ -25,10 +26,15 @@ expr :: Parser Expr
 expr =
   Unit <$ str "()"
     <|> CallExpr <$> call
+    <|> VarExpr <$> var
 
 call :: Parser Call
 call =
   uncurry Call
     <$> viewed name
     <* str "("
+    <* expr
     <* str ")"
+
+var :: Parser Var
+var = Var <$> name
