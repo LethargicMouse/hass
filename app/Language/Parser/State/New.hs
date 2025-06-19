@@ -7,9 +7,10 @@ import Language.Source.Pos.Ify (posify)
 new :: String -> String -> State
 new n s =
   State
-    (zip s ps)
-    lp
-    n
-    (fromList $ lines s)
+    { _rest = zip s ps,
+      _lastPos = lp,
+      _srcName = n,
+      _codeLines = fromList $ lines s
+    }
   where
     (lp, ps) = posify s

@@ -1,16 +1,13 @@
 module Language.IR.Runner
   ( Runner,
-    runRunner,
   )
 where
 
-import Control.Monad.Reader (ReaderT, runReaderT)
-import Control.Monad.State (StateT, evalStateT)
+import Control.Monad.Reader (ReaderT)
+import Control.Monad.State (StateT)
 import Language.IR.Program (Program)
 import Language.IR.Runner.State (State)
-import Language.IR.Runner.State.New (new)
 
+-- monad for running IR
+-- assuming program is correct
 type Runner a = ReaderT Program (StateT State IO) a
-
-runRunner :: Runner a -> Program -> IO a
-runRunner r = flip evalStateT new . runReaderT r

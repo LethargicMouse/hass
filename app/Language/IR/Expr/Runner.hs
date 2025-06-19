@@ -1,5 +1,6 @@
 module Language.IR.Expr.Runner
   ( expr,
+    set,
   )
 where
 
@@ -14,18 +15,23 @@ import Language.IR.Runner.State.Var (Var (..))
 
 expr :: Expr -> Runner Expr
 expr Unit = pure Unit
-expr (Call n) = do
+expr (Call n) = call n
+expr (VarExpr n) = var n
+expr (Block es e) = mapM_ expr es >> expr e
+expr (Set s e) = Unit <$ set s e
+expr (Str s) = pure (Str s)
+expr (List es) = List <$> mapM expr es
+
+call :: String -> Runner Expr
+call n = do
   fs <- view funs
   expr (ret $ fs ! n) -- TODO do something with this??
-expr (VarExpr n) = do
+
+var :: String -> Runner Expr
+var n = do
   vs <- use vars
   let Var e = vs ! n
   expr e
-expr (Block es e) = do
-  mapM_ expr es
-  expr e
-expr (Set s e) = do
-  e' <- expr e
-  Unit <$ modifying vars (insert s $ Var e')
-expr (Str s) = pure (Str s)
-expr (List es) = List <$> mapM expr es
+
+set :: String -> Expr -> Runner ()
+set s e = modifying vars . insert s . Var =<< expr e

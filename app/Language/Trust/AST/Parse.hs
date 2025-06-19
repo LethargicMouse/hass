@@ -3,8 +3,8 @@ module Language.Trust.AST.Parse
   )
 where
 
-import Language.Parser (runParser)
 import Language.Parser.Error (Error)
+import Language.Parser.Run (runParser)
 import Language.Trust.AST (AST)
 import Language.Trust.AST.Parser (ast)
 

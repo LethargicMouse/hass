@@ -4,8 +4,8 @@ module Language.Trust.Program.Check
 where
 
 import qualified Language.IR.Program as IR
-import Language.Trust.Checker (runChecker)
 import Language.Trust.Checker.Error (Error)
+import Language.Trust.Checker.Run (runChecker)
 import Language.Trust.Program (Program)
 import Language.Trust.Program.Checker (program)
 

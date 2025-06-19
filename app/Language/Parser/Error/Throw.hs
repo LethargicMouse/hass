@@ -15,6 +15,6 @@ import Language.Source.Pos (Pos (..))
 failParse :: String -> Parser a
 failParse msg = do
   Pos l s <- gets pos
-  v <- view (Pos l s) (Pos l $ s + 1)
+  v <- view (Pos l s) (Pos l $ succ s)
   tell (Error v [msg])
   throwError ()

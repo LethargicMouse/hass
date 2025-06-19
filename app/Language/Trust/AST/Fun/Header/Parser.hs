@@ -12,10 +12,10 @@ import Language.Trust.AST.Field.Parser (field)
 import Language.Trust.Fun.Header (Header (..))
 
 header :: Parser Header
-header = do
-  str "fn"
-  (nv, n) <- viewed name
-  str "("
-  ps <- many field
-  str ")"
-  pure (Header nv n ps)
+header =
+  uncurry Header
+    <$ str "fn"
+    <*> viewed name
+    <* str "("
+    <*> many field
+    <* str ")"
