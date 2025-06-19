@@ -16,6 +16,6 @@ header = do
   str "fn"
   (nv, n) <- viewed name
   str "("
-  _ <- many field
+  ps <- many field
   str ")"
-  pure (Header nv n)
+  pure (Header nv n ps)

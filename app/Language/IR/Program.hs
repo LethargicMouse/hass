@@ -14,5 +14,6 @@ newtype Program
   = Program
   { _funs :: Map String Fun
   }
+  deriving (Show)
 
 makeLenses ''Program

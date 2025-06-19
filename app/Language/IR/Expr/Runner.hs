@@ -3,8 +3,8 @@ module Language.IR.Expr.Runner
   )
 where
 
-import Control.Lens (use, view)
-import Data.Map ((!))
+import Control.Lens (modifying, use, view)
+import Data.Map (insert, (!))
 import Language.IR.Expr (Expr (..))
 import Language.IR.Fun (ret)
 import Language.IR.Program (funs)
@@ -21,3 +21,11 @@ expr (VarExpr n) = do
   vs <- use vars
   let Var e = vs ! n
   expr e
+expr (Block es e) = do
+  mapM_ expr es
+  expr e
+expr (Set s e) = do
+  e' <- expr e
+  Unit <$ modifying vars (insert s $ Var e')
+expr (Str s) = pure (Str s)
+expr (List es) = List <$> mapM expr es

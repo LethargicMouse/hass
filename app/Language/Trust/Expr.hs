@@ -17,7 +17,7 @@ newtype Block
   = Block Expr
 
 data Call
-  = Call View String
+  = Call View String [Expr]
 
-newtype Var
-  = Var String
+data Var
+  = Var View String

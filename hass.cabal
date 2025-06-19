@@ -59,6 +59,7 @@ executable hass
 
     -- Modules included in this executable, other than Main.
     other-modules:
+        Control'.Lens.Save,
         Display.Message,
         Language.IR.Expr,
         Language.IR.Expr.Runner,
@@ -79,6 +80,7 @@ executable hass
         Language.Parser.State.Pos,
         Language.Parser.Util.Eof,
         Language.Parser.Util.Name,
+        Language.Parser.Util.Sep,
         Language.Parser.Util.SkipSpace,
         Language.Parser.Util.Str,
         Language.Parser.Util.View,
@@ -89,6 +91,7 @@ executable hass
         Language.Trust.Args.Process,
         Language.Trust.AST,
         Language.Trust.AST.Expr.Parser,
+        Language.Trust.AST.Field,
         Language.Trust.AST.Field.Parser,
         Language.Trust.AST.Fun.Header.Parser,
         Language.Trust.AST.Fun.Parser,
@@ -100,6 +103,10 @@ executable hass
         Language.Trust.Checker,
         Language.Trust.Checker.Error,
         Language.Trust.Checker.Error.NotDeclared,
+        Language.Trust.Checker.State,
+        Language.Trust.Checker.State.New,
+        Language.Trust.Checker.State.Var,
+        Language.Trust.Checker.State.Var.Add,
         Language.Trust.Checker.Util.OrFail,
         Language.Trust.Compile,
         Language.Trust.Error,
@@ -108,6 +115,7 @@ executable hass
         Language.Trust.Fun,
         Language.Trust.Fun.Checker,
         Language.Trust.Fun.Header,
+        Language.Trust.Fun.Header.Checker,
         Language.Trust.Fun.Header.Checker.Find,
         Language.Trust.Program,
         Language.Trust.Program.Build,

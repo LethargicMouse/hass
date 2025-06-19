@@ -6,6 +6,7 @@ where
 import Control.Applicative ((<|>))
 import Language.Parser (Parser)
 import Language.Parser.Util.Name (name)
+import Language.Parser.Util.Sep (sep)
 import Language.Parser.Util.Str (str)
 import Language.Parser.Util.Viewed (viewed)
 import Language.Trust.Expr
@@ -33,8 +34,8 @@ call =
   uncurry Call
     <$> viewed name
     <* str "("
-    <* expr
+    <*> sep "," expr
     <* str ")"
 
 var :: Parser Var
-var = Var <$> name
+var = uncurry Var <$> viewed name

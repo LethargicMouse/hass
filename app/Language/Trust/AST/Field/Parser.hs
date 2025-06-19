@@ -3,9 +3,9 @@ module Language.Trust.AST.Field.Parser
   )
 where
 
-import Control.Monad (void)
 import Language.Parser (Parser)
 import Language.Parser.Util.Name (name)
+import Language.Trust.AST.Field (Field (..))
 
-field :: Parser ()
-field = void name
+field :: Parser Field
+field = Field <$> name
