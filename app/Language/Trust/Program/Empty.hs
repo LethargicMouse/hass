@@ -7,4 +7,4 @@ import qualified Data.Map as M
 import Language.Trust.Program (Program (..))
 
 empty :: Program
-empty = Program "<unknown>" M.empty
+empty = Program "<unknown>" M.empty M.empty

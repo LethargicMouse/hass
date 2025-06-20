@@ -12,6 +12,7 @@ import Language.IR.Program (funs)
 import Language.IR.Runner (Runner)
 import Language.IR.Runner.State (vars)
 import Language.IR.Runner.State.Var (Var (..))
+import qualified Language.IR.Runner.State.Var as V
 
 expr :: Expr -> Runner Expr
 expr Unit = pure Unit
@@ -21,6 +22,8 @@ expr (Block es e) = mapM_ expr es >> expr e
 expr (Set s e) = Unit <$ set s e
 expr (Str s) = pure (Str s)
 expr (List es) = List <$> mapM expr es
+expr (Get e i) = get e i
+expr (Int i) = pure (Int i)
 
 call :: String -> Runner Expr
 call n = do
@@ -30,8 +33,12 @@ call n = do
 var :: String -> Runner Expr
 var n = do
   vs <- use vars
-  let Var e = vs ! n
-  expr e
+  -- don't need to eval var value, as it is already eval'ed
+  pure $ view V.expr (vs ! n)
 
 set :: String -> Expr -> Runner ()
 set s e = modifying vars . insert s . Var =<< expr e
+
+get :: Expr -> Int -> Runner Expr
+get (List es) i = expr (es !! i)
+get e _ = error ("runner failed: unable to index `" ++ show e ++ "`")

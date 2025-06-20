@@ -3,5 +3,7 @@ module Language.Trust.Checker.State.Var
   )
 where
 
-data Var
-  = Var
+import Language.Trust.Type (Type)
+
+newtype Var
+  = Var Type

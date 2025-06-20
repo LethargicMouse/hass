@@ -11,4 +11,6 @@ data Expr
   | Set String Expr
   | Str String
   | List [Expr]
+  | Get Expr Int
+  | Int Int
   deriving (Show)

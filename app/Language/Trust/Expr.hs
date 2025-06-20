@@ -3,6 +3,7 @@ module Language.Trust.Expr
     Expr (..),
     Call (..),
     Var (..),
+    Field (..),
   )
 where
 
@@ -11,6 +12,7 @@ import Language.View (View)
 data Expr
   = Unit
   | CallExpr Call
+  | FieldExpr Field
   | VarExpr Var
 
 newtype Block
@@ -21,3 +23,6 @@ data Call
 
 data Var
   = Var View String
+
+data Field
+  = Field Expr View String

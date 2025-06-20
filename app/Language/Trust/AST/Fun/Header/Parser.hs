@@ -10,6 +10,7 @@ import Language.Parser.Util.Str (str)
 import Language.Parser.Util.Viewed (viewed)
 import Language.Trust.AST.Field.Parser (field)
 import Language.Trust.Fun.Header (Header (..))
+import Language.Trust.Type (Type (..))
 
 header :: Parser Header
 header =
@@ -19,3 +20,4 @@ header =
     <* str "("
     <*> many field
     <* str ")"
+    <*> pure Unit

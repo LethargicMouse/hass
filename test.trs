@@ -7,5 +7,5 @@ fn trust(args) {
 }
 
 fn process(args) {
-  args
+  args.len
 }

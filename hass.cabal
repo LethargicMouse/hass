@@ -93,6 +93,7 @@ executable hass
         Language.Trust.Args.Process,
         Language.Trust.AST,
         Language.Trust.AST.Expr.Parser,
+        Language.Trust.AST.Expr.Postfix,
         Language.Trust.AST.Field,
         Language.Trust.AST.Field.Parser,
         Language.Trust.AST.Fun.Header.Parser,
@@ -105,6 +106,7 @@ executable hass
         Language.Trust.Builder.Run,
         Language.Trust.Checker,
         Language.Trust.Checker.Error,
+        Language.Trust.Checker.Error.NoField,
         Language.Trust.Checker.Error.NotDeclared,
         Language.Trust.Checker.Run,
         Language.Trust.Checker.State,
@@ -131,6 +133,10 @@ executable hass
         Language.Trust.Program.Empty,
         Language.Trust.Run.Code,
         Language.Trust.Run.File,
+        Language.Trust.Type,
+        Language.Trust.Struct,
+        Language.Trust.Struct.Field,
+        Language.Trust.Struct.Field.Find,
         Language.View,
         Process.Die
 

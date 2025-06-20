@@ -3,16 +3,19 @@ module Language.Trust.AST.Expr.Parser
   )
 where
 
-import Control.Applicative ((<|>))
+import Control.Applicative (many, (<|>))
+import Data.Foldable (foldl')
 import Language.Parser (Parser)
 import Language.Parser.Util.Name (name)
 import Language.Parser.Util.Sep (sep)
 import Language.Parser.Util.Str (str)
 import Language.Parser.Util.Viewed (viewed)
+import qualified Language.Trust.AST.Expr.Postfix as P
 import Language.Trust.Expr
   ( Block (..),
     Call (..),
     Expr (..),
+    Field (..),
     Var (..),
   )
 
@@ -24,7 +27,15 @@ block =
     <* str "}"
 
 expr :: Parser Expr
-expr =
+expr = do
+  e <- expr'
+  ps <- many postfix
+  pure (foldl' f e ps)
+  where
+    f e (P.Field nv n) = FieldExpr (Field e nv n)
+
+expr' :: Parser Expr
+expr' =
   Unit <$ str "()"
     <|> CallExpr <$> call
     <|> VarExpr <$> var
@@ -39,3 +50,6 @@ call =
 
 var :: Parser Var
 var = uncurry Var <$> viewed name
+
+postfix :: Parser P.Postfix
+postfix = uncurry P.Field <$ str "." <*> viewed name

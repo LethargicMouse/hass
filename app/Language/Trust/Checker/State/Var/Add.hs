@@ -11,6 +11,6 @@ import Language.Trust.Checker.State (vars)
 import Language.Trust.Checker.State.Var (Var (..))
 
 add :: Field -> Checker ()
-add (Field n) =
+add (Field n t) =
   modifying vars $
-    insert n Var
+    insert n (Var t)

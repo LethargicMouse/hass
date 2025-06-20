@@ -9,5 +9,5 @@ import Language.Trust.Checker.State.Var.Add (add)
 import Language.Trust.Fun.Header (Header (..))
 
 header :: Header -> Checker ()
-header (Header _ _ params) = do
+header (Header _ _ params _) = do
   forM_ params add
