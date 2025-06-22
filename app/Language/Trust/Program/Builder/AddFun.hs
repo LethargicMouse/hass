@@ -18,6 +18,7 @@ addFun f = do
   let n = view (header . name) f
   fs <- use funs
   case fs !? n of
+    Nothing -> modifying funs (insert n f)
     Just f' ->
       throwError $
         AlreadyExists
@@ -27,4 +28,3 @@ addFun f = do
               n
               (view (header . nameView) f')
           )
-    Nothing -> modifying funs (insert n f)

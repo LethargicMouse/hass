@@ -9,11 +9,11 @@ import Language.Parser (Parser)
 import Language.Parser.State (srcName)
 import Language.Parser.Util.Eof (eof)
 import Language.Trust.AST (AST (..))
-import Language.Trust.AST.Fun.Parser (fun)
+import Language.Trust.AST.Top.Parser (top)
 
 ast :: Parser AST
 ast =
   AST
     <$> use srcName
-    <*> many fun
+    <*> many top
     <* eof

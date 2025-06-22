@@ -4,6 +4,7 @@ module Language.Trust.Struct.Field
 where
 
 import Language.Trust.Type (Type)
+import Language.View (View)
 
 data Field
-  = Field Int Type
+  = Field View Int Type

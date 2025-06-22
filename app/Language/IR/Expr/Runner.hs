@@ -22,7 +22,9 @@ expr (Block es e) = mapM_ expr es >> expr e
 expr (Set s e) = Unit <$ set s e
 expr (Str s) = pure (Str s)
 expr (List es) = List <$> mapM expr es
-expr (Get e i) = get e i
+expr (Get e i) = do
+  e' <- expr e
+  pure (get e' i)
 expr (Int i) = pure (Int i)
 
 call :: String -> Runner Expr
@@ -39,6 +41,6 @@ var n = do
 set :: String -> Expr -> Runner ()
 set s e = modifying vars . insert s . Var =<< expr e
 
-get :: Expr -> Int -> Runner Expr
-get (List es) i = expr (es !! i)
+get :: Expr -> Int -> Expr
+get (List es) i = es !! i
 get e _ = error ("runner failed: unable to index `" ++ show e ++ "`")

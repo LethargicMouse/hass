@@ -3,10 +3,11 @@ module Language.Trust.Struct
   )
 where
 
-import Data.Map (Map)
-import Language.Trust.Struct.Field (Field)
+import Language.Trust.Struct.Fields (Fields)
+import Language.View (View)
 
-newtype Struct
+data Struct
   = Struct
-  { fields :: Map String Field
+  { nameView :: View,
+    fields :: Fields
   }

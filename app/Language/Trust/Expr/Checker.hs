@@ -54,5 +54,5 @@ var (Var nv n) = do
 field :: Field -> Checker (IR.Expr, Type)
 field (Field e nv n) = do
   (e', t) <- expr e
-  F.Field i t' <- FF.findField t nv n
+  F.Field _ i t' <- FF.findField t nv n
   pure (IR.Get e' i, t')

@@ -8,9 +8,9 @@ import Control.Monad (forM_)
 import Language.Trust.AST (AST (..))
 import Language.Trust.Builder (Builder)
 import Language.Trust.Program (Program, name)
-import Language.Trust.Program.Builder.AddFun (addFun)
+import Language.Trust.Program.Builder.Add (add)
 
 programBuilder :: AST -> Builder Program
-programBuilder (AST n fs) = do
+programBuilder (AST n ts) = do
   assign name n
-  forM_ fs addFun
+  forM_ ts add

@@ -3,7 +3,7 @@ module Language.Trust.AST
   )
 where
 
-import Language.Trust.Fun (Fun)
+import Language.Trust.AST.Top (Top)
 
 data AST
-  = AST String [Fun]
+  = AST String [Top]
