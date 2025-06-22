@@ -16,10 +16,10 @@ import Language.Trust.Type (Type)
 import Language.View (View)
 
 findField :: Type -> View -> String -> Checker Field
-findField n mv m = do
+findField t mv m = do
   ss <- view structs
-  (ss !? show n)
+  (ss !? show t)
     >>= (!? m)
       . fields
       `orFail` NoField
-        (NF mv m n)
+        (NF mv m t)

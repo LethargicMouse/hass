@@ -6,10 +6,12 @@ fn trust(args) {
   process(args)
 }
 
-fn process(args: slice) {
+fn process(args) {
   args.len
 }
 
 struct slice {
   len
 }
+
+type args = slice;
