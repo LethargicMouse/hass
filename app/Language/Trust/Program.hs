@@ -10,17 +10,16 @@ module Language.Trust.Program
 where
 
 import Control.Lens (makeLenses)
-import Data.Map (Map)
-import Language.Trust.Alias (Alias)
-import Language.Trust.Fun (Fun)
-import Language.Trust.Struct (Struct)
+import Language.Trust.Program.Aliases (Aliases)
+import Language.Trust.Program.Funs (Funs)
+import Language.Trust.Program.Structs (Structs)
 
 data Program
   = Program
   { _name :: String,
-    _funs :: Map String Fun,
-    _structs :: Map String Struct,
-    _aliases :: Map String Alias
+    _funs :: Funs,
+    _structs :: Structs,
+    _aliases :: Aliases
   }
 
 makeLenses ''Program

@@ -1,24 +1,25 @@
-module Language.Trust.Program.Builder.AddFun
+module Language.Trust.Program.Builder.Add.Fun
   ( addFun,
   )
 where
 
-import Control.Lens (modifying, use, view)
+import Control.Lens (view)
 import Control.Monad.Except (throwError)
+import Control.Monad.State (get, modify)
 import Data.Map (insert, (!?))
 import Language.Trust.Builder (Builder)
 import Language.Trust.Builder.Error (Error (..))
 import Language.Trust.Builder.Error.AlreadyExists (AE (..))
 import Language.Trust.Fun (Fun, header)
 import Language.Trust.Fun.Header (name, nameView)
-import Language.Trust.Program (Program, funs)
+import Language.Trust.Program.Funs (Funs)
 
-addFun :: Fun -> Builder Program
+addFun :: Fun -> Builder Funs
 addFun f = do
   let n = view (header . name) f
-  fs <- use funs
+  fs <- get
   case fs !? n of
-    Nothing -> modifying funs (insert n f)
+    Nothing -> modify (insert n f)
     Just f' ->
       throwError $
         AlreadyExists

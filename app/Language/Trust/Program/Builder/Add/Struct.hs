@@ -3,25 +3,25 @@ module Language.Trust.Program.Builder.Add.Struct
   )
 where
 
-import Control.Lens (modifying, use)
 import Control.Monad.Except (liftEither, throwError)
+import Control.Monad.State (get, modify)
 import Data.Map (empty, insert, (!?))
 import Language.Trust.AST.Struct (Struct (..))
 import Language.Trust.Builder (Builder)
 import Language.Trust.Builder.Error (Error (..))
 import Language.Trust.Builder.Error.AlreadyExists (AE (..))
 import Language.Trust.Builder.Run (runBuilder)
-import Language.Trust.Program (Program, structs)
+import Language.Trust.Program.Structs (Structs)
 import Language.Trust.Struct (nameView)
 import qualified Language.Trust.Struct as S
 import Language.Trust.Struct.Fields.Builder (fieldsBuilder)
 
-addStruct :: Struct -> Builder Program
+addStruct :: Struct -> Builder Structs
 addStruct (Struct nv n fs) = do
-  ss <- use structs
+  ss <- get
   case ss !? n of
     Nothing ->
-      modifying structs
+      modify
         . insert n
         . S.Struct nv
         =<< liftEither (runBuilder (fieldsBuilder fs) empty)
