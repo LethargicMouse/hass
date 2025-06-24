@@ -7,6 +7,7 @@ module Language.Trust.Expr
     BinExpr (..),
     If (..),
     Command (..),
+    Get (..),
   )
 where
 
@@ -23,6 +24,7 @@ data Expr
   | IfExpr If
   | BlockExpr Block
   | CommandExpr Command
+  | GetExpr Get
 
 data Block
   = Block [Expr] Expr
@@ -44,3 +46,6 @@ data If
 
 data Command
   = Command View String [(View, Expr)]
+
+data Get
+  = Get Expr Integer

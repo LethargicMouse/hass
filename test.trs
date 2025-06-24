@@ -8,8 +8,13 @@ fn trust(args) {
 
 fn process(args) {
   if args.len != 1 {
-    die("! expected exactly one argument")
+    die("! expected exactly one argument\n")
   }
+  run_file(args.buf[1], path)
+}
+
+fn run_file() {
+  
 }
 
 fn die(str) {

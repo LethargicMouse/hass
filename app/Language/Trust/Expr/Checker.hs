@@ -16,13 +16,14 @@ import Language.Trust.Checker.Error.UnknownCommand (UC (..))
 import Language.Trust.Checker.State (vars)
 import qualified Language.Trust.Checker.State.Var as C
 import Language.Trust.Checker.Util.OrFail (orFail)
-import Language.Trust.Expr (BinExpr (..), Block (..), Call (..), Command (..), Expr (..), Field (..), If (..), Var (..))
+import Language.Trust.Expr (BinExpr (..), Block (..), Call (..), Command (..), Expr (..), Field (..), Get (..), If (..), Var (..))
 import Language.Trust.Expr.Literal.Checker (literal)
 import Language.Trust.Fun.Header (params, retType)
 import Language.Trust.Fun.Header.Checker.Find (findHeader)
 import qualified Language.Trust.Struct.Field as F
 import qualified Language.Trust.Struct.Field.Find as FF
 import Language.Trust.Type (Type (..))
+import Language.Trust.Type.Elem (elemType)
 import Language.View (View)
 import Prelude hiding (print)
 
@@ -41,6 +42,7 @@ expr (BinaryExpr b) = binExpr b
 expr (IfExpr i) = if' i
 expr (BlockExpr b) = block b
 expr (CommandExpr c) = command c
+expr (GetExpr g) = get g
 
 call :: Call -> Checker (IR.Expr, Type)
 call (Call nv n args) = do
@@ -96,3 +98,9 @@ print :: [(View, Expr)] -> Checker (IR.Expr, Type)
 print es = do
   es' <- forM es (fmap fst . expr . snd)
   pure (IR.Block (IR.Print <$> es') IR.Unit, Unit)
+
+get :: Get -> Checker (IR.Expr, Type)
+get (Get e i) = do
+  (e', t) <- expr e
+  t' <- elemType t
+  pure (IR.Get e' $ fromInteger i, t')

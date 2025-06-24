@@ -160,6 +160,7 @@ executable hass
         Language.Trust.Run.Code,
         Language.Trust.Run.File,
         Language.Trust.Type,
+        Language.Trust.Type.Elem,
         Language.Trust.Struct,
         Language.Trust.Struct.Field,
         Language.Trust.Struct.Field.Find,

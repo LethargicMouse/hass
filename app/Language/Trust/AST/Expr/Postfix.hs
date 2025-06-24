@@ -7,3 +7,4 @@ import Language.View (View)
 
 data Postfix
   = Field View String
+  | Get Integer

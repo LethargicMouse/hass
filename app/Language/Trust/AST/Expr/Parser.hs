@@ -4,9 +4,11 @@ module Language.Trust.AST.Expr.Parser
 where
 
 import Control.Applicative (many, (<|>))
+import Control.Monad (when)
 import Data.Foldable (foldl')
 import Language.Parser (Parser)
 import Language.Parser.Util.Name (name, name')
+import Language.Parser.Util.Number (number)
 import Language.Parser.Util.Sep (sep)
 import Language.Parser.Util.Str (str)
 import Language.Parser.Util.Viewed (viewed)
@@ -20,6 +22,7 @@ import Language.Trust.Expr
     Command (..),
     Expr (..),
     Field (..),
+    Get (..),
     If (..),
     Var (..),
   )
@@ -36,8 +39,12 @@ block =
 statement :: Parser Expr
 statement = do
   e <- expr
-  str ";"
+  when (needSemicolon e) (str ";")
   pure e
+
+needSemicolon :: Expr -> Bool
+needSemicolon (IfExpr _) = False
+needSemicolon _ = True
 
 expr :: Parser Expr
 expr = do
@@ -54,6 +61,7 @@ expr'' = do
   pure (foldl' f e ps)
   where
     f e (P.Field nv n) = FieldExpr (Field e nv n)
+    f e (P.Get i) = GetExpr (Get e i)
 
 expr' :: Parser Expr
 expr' =
@@ -76,7 +84,9 @@ var :: Parser Var
 var = uncurry Var <$> viewed name
 
 postfix :: Parser P.Postfix
-postfix = uncurry P.Field <$ str "." <*> viewed name
+postfix =
+  uncurry P.Field <$ str "." <*> viewed name
+    <|> P.Get <$ str "[" <*> number <* str "]"
 
 if' :: Parser If
 if' =
