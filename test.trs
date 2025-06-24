@@ -7,9 +7,13 @@ fn trust(args) {
 }
 
 fn process(args) {
-  if args.len != 1 {
-    
+  if args.len != 20 {
+    die("! expected exactly one argument")
   }
+}
+
+fn die(str) {
+  @print(str)
 }
 
 struct slice {

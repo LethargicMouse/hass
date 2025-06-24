@@ -85,6 +85,7 @@ executable hass
         Language.Parser.Util.Name,
         Language.Parser.Util.Name.Char,
         Language.Parser.Util.Number,
+        Language.Parser.Util.Satisfy,
         Language.Parser.Util.Sep,
         Language.Parser.Util.SkipSpace,
         Language.Parser.Util.Str,
@@ -100,6 +101,8 @@ executable hass
         Language.Trust.AST.Expr.Binary,
         Language.Trust.AST.Expr.Binary.Parser,
         Language.Trust.AST.Expr.Literal.Parser,
+        Language.Trust.AST.Expr.Literal.Parser.String,
+        Language.Trust.AST.Expr.Literal.Parser.String.Char,
         Language.Trust.AST.Expr.Parser,
         Language.Trust.AST.Expr.Postfix,
         Language.Trust.AST.Field,
@@ -169,7 +172,8 @@ executable hass
     -- other-extensions:
 
     -- Other library packages from which modules are imported.
-    build-depends:    base ^>=4.17.2.1, mtl, containers, lens, vector
+    build-depends:    base ^>=4.17.2.1, mtl, containers, lens, vector,
+        h-raylib
 
     -- Directories containing source files.
     hs-source-dirs:   app

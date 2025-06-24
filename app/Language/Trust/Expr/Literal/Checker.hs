@@ -12,3 +12,4 @@ import qualified Language.Trust.Type as T
 literal :: Literal -> Checker (IR.Expr, Type)
 literal Unit = pure (IR.Unit, T.Unit)
 literal (Int i) = pure (IR.Int i, Name "int")
+literal (String s) = pure (IR.Str s, Name "str")

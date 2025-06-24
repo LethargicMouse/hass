@@ -6,3 +6,4 @@ where
 data Literal
   = Unit
   | Int Integer
+  | String String
