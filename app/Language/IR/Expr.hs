@@ -12,5 +12,9 @@ data Expr
   | Str String
   | List [Expr]
   | Get Expr Int
-  | Int Int
-  deriving (Show)
+  | Int Integer
+  | Not Expr
+  | Equal Expr Expr
+  | Bool Bool
+  | If Expr Expr Expr
+  deriving (Eq, Show)

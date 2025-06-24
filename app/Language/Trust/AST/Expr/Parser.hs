@@ -10,24 +10,37 @@ import Language.Parser.Util.Name (name)
 import Language.Parser.Util.Sep (sep)
 import Language.Parser.Util.Str (str)
 import Language.Parser.Util.Viewed (viewed)
+import Language.Trust.AST.Expr.Binary.Parser (binary)
+import Language.Trust.AST.Expr.Literal.Parser (literal)
 import qualified Language.Trust.AST.Expr.Postfix as P
 import Language.Trust.Expr
-  ( Block (..),
+  ( BinExpr (..),
+    Block (..),
     Call (..),
     Expr (..),
     Field (..),
+    If (..),
     Var (..),
   )
+import Language.Trust.Expr.Literal (Literal (..))
 
 block :: Parser Block
 block =
   Block
     <$ str "{"
-    <*> (expr <|> pure Unit)
+    <*> (expr <|> pure (Literal Unit))
     <* str "}"
 
 expr :: Parser Expr
 expr = do
+  e <- expr''
+  es <- many ((,) <$> binary <*> expr'')
+  pure (foldl' f e es)
+  where
+    f a (o, b) = BinaryExpr (BinExpr a o b)
+
+expr'' :: Parser Expr
+expr'' = do
   e <- expr'
   ps <- many postfix
   pure (foldl' f e ps)
@@ -36,7 +49,9 @@ expr = do
 
 expr' :: Parser Expr
 expr' =
-  Unit <$ str "()"
+  Literal <$> literal
+    <|> IfExpr <$> if'
+    <|> BlockExpr <$> block
     <|> CallExpr <$> call
     <|> VarExpr <$> var
 
@@ -53,3 +68,11 @@ var = uncurry Var <$> viewed name
 
 postfix :: Parser P.Postfix
 postfix = uncurry P.Field <$ str "." <*> viewed name
+
+if' :: Parser If
+if' =
+  If
+    <$ str "if"
+    <*> expr
+    <*> expr
+    <*> (str "else" *> expr <|> pure (Literal Unit))

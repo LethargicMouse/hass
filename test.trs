@@ -7,7 +7,9 @@ fn trust(args) {
 }
 
 fn process(args) {
-  args.len
+  if args.len != 1 {
+    
+  }
 }
 
 struct slice {

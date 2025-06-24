@@ -14,5 +14,5 @@ import Language.Trust.Fun.Header.Checker (header)
 fun :: Fun -> Checker IR.Fun
 fun (Fun h b) = save vars $ do
   header h
-  ret <- block b
+  (ret, _) <- block b
   pure (IR.Fun ret)

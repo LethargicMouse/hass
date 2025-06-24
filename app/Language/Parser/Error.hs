@@ -8,6 +8,7 @@ module Language.Parser.Error
 where
 
 import qualified Control.Lens as L
+import Data'.List.NubSort (nubSort)
 import Data.Function (on)
 import Data.Vector (empty)
 import Language.Source.Pos (Pos (..))
@@ -26,7 +27,7 @@ instance Show Error where
     "! error "
       ++ show v
       ++ "\n--! expected:"
-      ++ concatMap ("\n    - " ++) msgs
+      ++ concatMap ("\n    - " ++) (nubSort msgs)
 
 instance Semigroup Error where
   a <> b = case on compare (L.view $ view . start) a b of

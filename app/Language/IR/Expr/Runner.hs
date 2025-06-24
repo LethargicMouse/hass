@@ -22,10 +22,19 @@ expr (Block es e) = mapM_ expr es >> expr e
 expr (Set s e) = Unit <$ set s e
 expr (Str s) = pure (Str s)
 expr (List es) = List <$> mapM expr es
-expr (Get e i) = do
-  e' <- expr e
-  pure (get e' i)
+expr (Get e i) = get <$> expr e <*> pure i
 expr (Int i) = pure (Int i)
+expr (Not a) = not' <$> expr a
+expr (Bool a) = pure (Bool a)
+expr (Equal a b) = equal <$> expr a <*> expr b
+expr (If c t e) = expr c >>= expr . if' t e
+
+if' :: Expr -> Expr -> Expr -> Expr
+if' t e (Bool b) = if b then t else e
+if' _ _ e = error ("runner failed: `" ++ show e ++ "` is not boolean")
+
+equal :: Expr -> Expr -> Expr
+equal a b = Bool (a == b)
 
 call :: String -> Runner Expr
 call n = do
@@ -44,3 +53,7 @@ set s e = modifying vars . insert s . Var =<< expr e
 get :: Expr -> Int -> Expr
 get (List es) i = es !! i
 get e _ = error ("runner failed: unable to index `" ++ show e ++ "`")
+
+not' :: Expr -> Expr
+not' (Bool b) = Bool (not b)
+not' e = error ("runner failed: unable to negate `" ++ show e ++ "`")
