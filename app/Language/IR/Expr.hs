@@ -17,4 +17,5 @@ data Expr
   | Equal Expr Expr
   | Bool Bool
   | If Expr Expr Expr
+  | Print Expr
   deriving (Eq, Show)

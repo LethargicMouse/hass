@@ -6,6 +6,7 @@ module Language.Trust.Expr
     Field (..),
     BinExpr (..),
     If (..),
+    Command (..),
   )
 where
 
@@ -21,6 +22,7 @@ data Expr
   | BinaryExpr BinExpr
   | IfExpr If
   | BlockExpr Block
+  | CommandExpr Command
 
 newtype Block
   = Block Expr
@@ -39,3 +41,6 @@ data BinExpr
 
 data If
   = If Expr Expr Expr
+
+data Command
+  = Command View String [(View, Expr)]

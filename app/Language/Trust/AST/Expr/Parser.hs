@@ -6,7 +6,7 @@ where
 import Control.Applicative (many, (<|>))
 import Data.Foldable (foldl')
 import Language.Parser (Parser)
-import Language.Parser.Util.Name (name)
+import Language.Parser.Util.Name (name, name')
 import Language.Parser.Util.Sep (sep)
 import Language.Parser.Util.Str (str)
 import Language.Parser.Util.Viewed (viewed)
@@ -17,6 +17,7 @@ import Language.Trust.Expr
   ( BinExpr (..),
     Block (..),
     Call (..),
+    Command (..),
     Expr (..),
     Field (..),
     If (..),
@@ -50,8 +51,9 @@ expr'' = do
 expr' :: Parser Expr
 expr' =
   Literal <$> literal
-    <|> IfExpr <$> if'
     <|> BlockExpr <$> block
+    <|> CommandExpr <$> command
+    <|> IfExpr <$> if'
     <|> CallExpr <$> call
     <|> VarExpr <$> var
 
@@ -76,3 +78,12 @@ if' =
     <*> expr
     <*> expr
     <*> (str "else" *> expr <|> pure (Literal Unit))
+
+command :: Parser Command
+command =
+  uncurry Command
+    <$ str "@"
+    <*> viewed name'
+    <* str "("
+    <*> sep "," (viewed expr)
+    <* str ")"

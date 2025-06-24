@@ -5,23 +5,26 @@ where
 
 import Control.Lens (use, view)
 import Control.Monad (forM)
-import Data.Map ((!?))
+import Data.Map (Map, fromList, (!?))
 import qualified Language.IR.Expr as IR
 import Language.Trust.AST.Expr.Binary (Binary (..))
 import Language.Trust.AST.Field (name)
 import Language.Trust.Checker (Checker)
 import Language.Trust.Checker.Error (Error (..))
 import Language.Trust.Checker.Error.NotDeclared (ND (..))
+import Language.Trust.Checker.Error.UnknownCommand (UC (..))
 import Language.Trust.Checker.State (vars)
 import qualified Language.Trust.Checker.State.Var as C
 import Language.Trust.Checker.Util.OrFail (orFail)
-import Language.Trust.Expr (BinExpr (..), Block (..), Call (..), Expr (..), Field (..), If (..), Var (..))
+import Language.Trust.Expr (BinExpr (..), Block (..), Call (..), Command (..), Expr (..), Field (..), If (..), Var (..))
 import Language.Trust.Expr.Literal.Checker (literal)
 import Language.Trust.Fun.Header (params, retType)
 import Language.Trust.Fun.Header.Checker.Find (findHeader)
 import qualified Language.Trust.Struct.Field as F
 import qualified Language.Trust.Struct.Field.Find as FF
 import Language.Trust.Type (Type (..))
+import Language.View (View)
+import Prelude hiding (print)
 
 block :: Block -> Checker (IR.Expr, Type)
 block (Block ret) = expr ret
@@ -34,6 +37,7 @@ expr (FieldExpr f) = field f
 expr (BinaryExpr b) = binExpr b
 expr (IfExpr i) = if' i
 expr (BlockExpr b) = block b
+expr (CommandExpr c) = command c
 
 call :: Call -> Checker (IR.Expr, Type)
 call (Call nv n args) = do
@@ -73,3 +77,19 @@ if' (If c t e) = do
   (t', tt) <- expr t
   (e', _) <- expr e
   pure (IR.If c' t' e', tt)
+
+command :: Command -> Checker (IR.Expr, Type)
+command (Command nv n args) = do
+  c <- (commands !? n) `orFail` UnknownCommand (UC nv n)
+  c args
+
+commands :: Map String ([(View, Expr)] -> Checker (IR.Expr, Type))
+commands =
+  fromList
+    [ ("print", print)
+    ]
+
+print :: [(View, Expr)] -> Checker (IR.Expr, Type)
+print es = do
+  es' <- forM es (fmap fst . expr . snd)
+  pure (IR.Block (IR.Print <$> es') IR.Unit, Unit)

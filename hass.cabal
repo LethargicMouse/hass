@@ -124,6 +124,7 @@ executable hass
         Language.Trust.Checker.Error,
         Language.Trust.Checker.Error.NoField,
         Language.Trust.Checker.Error.NotDeclared,
+        Language.Trust.Checker.Error.UnknownCommand,
         Language.Trust.Checker.Run,
         Language.Trust.Checker.State,
         Language.Trust.Checker.State.New,

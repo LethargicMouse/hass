@@ -6,4 +6,6 @@ where
 import Language.Trust.Run.Code (runCode)
 
 runFile :: FilePath -> IO ()
-runFile n = readFile n >>= runCode n
+runFile n = do
+  putStrLn ("> running `" ++ n ++ "`:")
+  readFile n >>= runCode n

@@ -5,6 +5,7 @@ module Language.IR.Expr.Runner
 where
 
 import Control.Lens (modifying, use, view)
+import Control.Monad.IO.Class (liftIO)
 import Data.Map (insert, (!))
 import Language.IR.Expr (Expr (..))
 import Language.IR.Fun (ret)
@@ -13,6 +14,7 @@ import Language.IR.Runner (Runner)
 import Language.IR.Runner.State (vars)
 import Language.IR.Runner.State.Var (Var (..))
 import qualified Language.IR.Runner.State.Var as V
+import Prelude hiding (print)
 
 expr :: Expr -> Runner Expr
 expr Unit = pure Unit
@@ -28,6 +30,7 @@ expr (Not a) = not' <$> expr a
 expr (Bool a) = pure (Bool a)
 expr (Equal a b) = equal <$> expr a <*> expr b
 expr (If c t e) = expr c >>= expr . if' t e
+expr (Print e) = Unit <$ (print =<< expr e)
 
 if' :: Expr -> Expr -> Expr -> Expr
 if' t e (Bool b) = if b then t else e
@@ -57,3 +60,7 @@ get e _ = error ("runner failed: unable to index `" ++ show e ++ "`")
 not' :: Expr -> Expr
 not' (Bool b) = Bool (not b)
 not' e = error ("runner failed: unable to negate `" ++ show e ++ "`")
+
+print :: Expr -> Runner ()
+print (Str s) = liftIO (putStr s)
+print e = error ("runner failed: unable to print `" ++ show e ++ "`")

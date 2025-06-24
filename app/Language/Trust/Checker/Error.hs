@@ -5,11 +5,13 @@ where
 
 import Language.Trust.Checker.Error.NoField (NF)
 import Language.Trust.Checker.Error.NotDeclared (ND)
+import Language.Trust.Checker.Error.UnknownCommand (UC)
 
 data Error
   = NoMain String
   | NotDeclared ND
   | NoField NF
+  | UnknownCommand UC
 
 instance Show Error where
   show (NoMain s) =
