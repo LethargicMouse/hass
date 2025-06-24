@@ -14,6 +14,6 @@ import Language.IR.Runner (Runner)
 
 program :: [String] -> Runner ()
 program args = do
-  _ <- set "args" $ List [Int $ toInteger $ length args]
+  _ <- set "args" $ List [Int $ toInteger $ length args, List $ Str <$> args]
   Program funs <- ask
   void $ expr (ret $ funs ! "main")

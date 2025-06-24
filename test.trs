@@ -8,12 +8,23 @@ fn trust_main(args) {
 
 fn process(args) {
   if args.len != 1
-    die("! expected exactly one argument")
-  run_file(args[1])
+    die("! expected exactly one argument");
+  run_file(args.buf[0])
 }
 
 fn run_file(path) {
-  @print("> running `", path, "`")
+  @print("> running `", path, "`:\n");
+  run_code(path, read_file(path))
+}
+
+fn run_code() {
+  match compile(path, code) {
+    
+  }
+}
+
+fn read_file() {
+  
 }
 
 fn die() {
@@ -23,5 +34,6 @@ fn die() {
 type args = slice;
 
 struct slice {
-  len
+  len,
+  buf
 }

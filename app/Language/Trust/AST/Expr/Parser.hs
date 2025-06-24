@@ -43,7 +43,10 @@ statement = do
   pure e
 
 needSemicolon :: Expr -> Bool
-needSemicolon (IfExpr _) = False
+needSemicolon (IfExpr (If _ t (Literal Unit))) =
+  needSemicolon t
+needSemicolon (IfExpr (If _ _ e)) =
+  needSemicolon e
 needSemicolon _ = True
 
 expr :: Parser Expr
