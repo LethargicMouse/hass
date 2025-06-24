@@ -7,7 +7,9 @@ fn trust(args) {
 }
 
 fn process(args) {
-  @print(args)
+  if args.len != 1 {
+    die("! expected exactly one argument")
+  }
 }
 
 fn die(str) {

@@ -7,5 +7,5 @@ import Language.IR.Program (Program)
 import Language.IR.Program.Runner (program)
 import Language.IR.Runner.Run (runRunner)
 
-run :: Program -> IO ()
-run = runRunner program
+run :: [String] -> Program -> IO ()
+run = runRunner . program

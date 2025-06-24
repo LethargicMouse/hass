@@ -29,8 +29,15 @@ block :: Parser Block
 block =
   Block
     <$ str "{"
+    <*> many statement
     <*> (expr <|> pure (Literal Unit))
     <* str "}"
+
+statement :: Parser Expr
+statement = do
+  e <- expr
+  str ";"
+  pure e
 
 expr :: Parser Expr
 expr = do

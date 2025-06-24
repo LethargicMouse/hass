@@ -27,7 +27,10 @@ import Language.View (View)
 import Prelude hiding (print)
 
 block :: Block -> Checker (IR.Expr, Type)
-block (Block ret) = expr ret
+block (Block es ret) = do
+  es' <- mapM (fmap fst . expr) es
+  (ret', t) <- expr ret
+  pure (IR.Block es' ret', t)
 
 expr :: Expr -> Checker (IR.Expr, Type)
 expr (Literal l) = literal l

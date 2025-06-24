@@ -9,5 +9,5 @@ import Process.Die (die)
 
 process :: [String] -> IO ()
 process s = case s of
-  [p] -> runFile p
-  _ -> die (Message "! expected exactly one argument")
+  p : args -> runFile p args
+  [] -> die (Message "! expected path to file")

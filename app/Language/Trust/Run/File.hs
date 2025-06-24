@@ -5,7 +5,7 @@ where
 
 import Language.Trust.Run.Code (runCode)
 
-runFile :: FilePath -> IO ()
-runFile n = do
+runFile :: FilePath -> [String] -> IO ()
+runFile n args = do
   putStrLn ("> running `" ++ n ++ "`:")
-  readFile n >>= runCode n
+  readFile n >>= runCode n args

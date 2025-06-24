@@ -24,8 +24,8 @@ data Expr
   | BlockExpr Block
   | CommandExpr Command
 
-newtype Block
-  = Block Expr
+data Block
+  = Block [Expr] Expr
 
 data Call
   = Call View String [Expr]
