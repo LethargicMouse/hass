@@ -102,5 +102,4 @@ print es = do
 get :: Get -> Checker (IR.Expr, Type)
 get (Get e i) = do
   (e', t) <- expr e
-  t' <- elemType t
-  pure (IR.Get e' $ fromInteger i, t')
+  pure (IR.Get e' $ fromInteger i, elemType t)

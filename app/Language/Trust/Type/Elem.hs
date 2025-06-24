@@ -3,13 +3,14 @@ module Language.Trust.Type.Elem
   )
 where
 
-import Language.Trust.Checker (Checker)
-import Language.Trust.Type (Type)
+import Language.Trust.Type (Type (..))
 
-elemType :: Type -> Checker Type
+-- tmp, will be useless with `get` class
+elemType :: Type -> Type
+elemType (Ref t) = t
 elemType t =
   error
     ( "fatal check error: type `"
         ++ show t
-        ++ "` has no element, and it will be enforced later with classes"
+        ++ "` can't be indexed, and it will be enforced later with classes"
     )

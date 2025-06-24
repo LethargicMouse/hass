@@ -1,28 +1,27 @@
-fn main(args) {
-  trust(args)
+fn main() {
+  trust_main()
 }
 
-fn trust(args) {
+fn trust_main(args) {
   process(args)
 }
 
 fn process(args) {
-  if args.len != 1 {
-    die("! expected exactly one argument\n")
-  }
-  run_file(args.buf[1], path)
+  if args.len != 1
+    die("! expected exactly one argument")
+  run_file(args[1])
 }
 
-fn run_file() {
+fn run_file(path) {
+  @print("> running `", path, "`")
+}
+
+fn die() {
   
 }
 
-fn die(str) {
-  @print(str)
-}
+type args = slice;
 
 struct slice {
   len
 }
-
-type args = slice;
