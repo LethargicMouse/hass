@@ -1,0 +1,5 @@
+export function w $main() {
+  @start
+    %t1 =w copy 0
+    ret %t1
+}

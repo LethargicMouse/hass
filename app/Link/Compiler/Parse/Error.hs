@@ -1,0 +1,27 @@
+module Link.Compiler.Parse.Error (Error (..)) where
+
+import Data.Function (on)
+import Source.View (View, fakeView, start)
+
+data Error = Error
+  { messages :: [String],
+    view :: View
+  }
+
+instance Show Error where
+  show (Error ms v) =
+    "! parse error "
+      ++ show v
+      ++ "\n--! expected:"
+      ++ concatMap ("\n    - " ++) ms
+
+instance Semigroup Error where
+  a@(Error ams av) <> b@(Error bms bv) = case (compare `on` start) av bv of
+    LT -> b
+    GT -> a
+    EQ ->
+      let v = if length ams > length bms then av else bv
+       in Error (ams <> bms) v
+
+instance Monoid Error where
+  mempty = Error [] fakeView
