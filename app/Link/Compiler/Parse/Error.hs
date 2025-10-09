@@ -1,11 +1,12 @@
 module Link.Compiler.Parse.Error (Error (..)) where
 
 import Data.Function (on)
+import Data.Set (Set, empty)
 import Source.View (View, fakeView, start)
 
 data Error = Error
-  { messages :: [String],
-    view :: View
+  { messages :: Set String
+  , view :: View
   }
 
 instance Show Error where
@@ -24,4 +25,4 @@ instance Semigroup Error where
        in Error (ams <> bms) v
 
 instance Monoid Error where
-  mempty = Error [] fakeView
+  mempty = Error empty fakeView

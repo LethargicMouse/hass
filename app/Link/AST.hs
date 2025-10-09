@@ -1,14 +1,16 @@
-module Link.AST
-  ( AST (..),
-    Item (..),
-    Fn (..),
-    Header (..),
-    asFn,
-    Type (..),
-    Block (..),
-    Expr (..),
-    needsSemicolon,
-  )
+module Link.AST (
+  AST (..),
+  Item (..),
+  Fn (..),
+  Header (..),
+  asFn,
+  Type (..),
+  Block (..),
+  Expr (..),
+  needsSemicolon,
+  LetExpr (..),
+  CallExpr (..),
+)
 where
 
 import Named (Named (..))
@@ -41,6 +43,17 @@ data Block
 
 data Expr
   = Unit
+  | Let LetExpr
+  | Call CallExpr
+  | Var String
+  | Str String
+  | Int Integer
+
+data CallExpr
+  = CallExpr String [Expr]
+
+data LetExpr
+  = LetExpr String Expr
 
 instance OfKind Fn where
   kind _ = "function"
@@ -53,8 +66,8 @@ instance Named Fn where
 
 data Header
   = Header
-  { name_ :: Viewed String,
-    retType :: Type
+  { name_ :: Viewed String
+  , retType :: Type
   }
 
 instance HasView Header where

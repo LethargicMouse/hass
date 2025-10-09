@@ -53,10 +53,11 @@ executable hass
       OfKind,
       Link.Compiler.Generate.Stmts,
       Zoom,
-      Excel.Pro
+      Excel.Pro,
+      Script
     -- other-extensions:
     build-depends:    
-      base ^>=4.19.2.0,
+      base,
       process,
       mtl,
       Chart,
@@ -67,6 +68,8 @@ executable hass
       random,
       containers,
       hashable,
-      lens
+      lens,
+      xlsx,
+      bytestring
     hs-source-dirs:   app
     default-language: Haskell2010

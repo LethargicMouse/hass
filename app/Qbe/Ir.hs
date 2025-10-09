@@ -1,13 +1,19 @@
-module Qbe.Ir
-  ( IR (..),
-    dump,
-    empty,
-    Fn (..),
-    addFn,
-    Type (..),
-    Stmt (..),
-    Value (..),
-  )
+module Qbe.Ir (
+  IR (..),
+  dump,
+  empty,
+  Fn (..),
+  addFn,
+  Type (..),
+  Stmt (..),
+  Value (..),
+  ExType (..),
+  StoreStmt (..),
+  CopyStmt (..),
+  BinOp (..),
+  AllocStmt (..),
+  BinStmt (..),
+)
 where
 
 newtype IR
@@ -26,28 +32,77 @@ dump = writeFile "out.qbe" . show
 empty :: IR
 empty = IR []
 
+data ExType
+  = Basic Type
+  | Half
+  | Byte
+
+instance Show ExType where
+  show (Basic t) = show t
+  show Half = "h"
+  show Byte = "b"
+
+data BinOp
+  = Add
+
+instance Show BinOp where
+  show Add = "add"
+
+data CopyStmt
+  = CopyStmt String Type Value
+
+instance Show CopyStmt where
+  show (CopyStmt s t v) =
+    "  %" ++ s ++ " =" ++ show t ++ " copy " ++ show v
+
+data StoreStmt
+  = StoreStmt ExType Value Value
+
+instance Show StoreStmt where
+  show (StoreStmt t v p) =
+    "  store"
+      ++ show t
+      ++ " "
+      ++ show v
+      ++ ", "
+      ++ show p
+
+data AllocStmt
+  = AllocStmt String Int Int
+
+instance Show AllocStmt where
+  show (AllocStmt i a s) = "  %" ++ i ++ " =l alloc" ++ show a ++ " " ++ show s
+
+data BinStmt
+  = BinStmt String Type Value BinOp Value
+
+instance Show BinStmt where
+  show (BinStmt i t a o b) = "  %" ++ i ++ " =" ++ show t ++ " " ++ show o ++ " " ++ show a ++ ", " ++ show b
+
 data Stmt
   = Label String
   | Ret Value
-  | Copy String Type Value
+  | Copy CopyStmt
+  | Store StoreStmt
+  | Alloc AllocStmt
+  | Bin BinStmt
 
 instance Show Stmt where
   show (Label s) = '@' : s
   show (Ret v) = "  ret " ++ show v
-  show (Copy i t v) =
-    "  %"
-      ++ i
-      ++ " ="
-      ++ show t
-      ++ " copy "
-      ++ show v
+  show (Store s) = show s
+  show (Copy c) = show c
+  show (Alloc s) = show s
+  show (Bin s) = show s
 
 data Value
   = Tmp String
   | Int Int
+  | Const String
 
 instance Show Value where
   show (Tmp i) = '%' : i
+  show (Const i) = '$' : i
   show (Int a) = show a
 
 data Fn
@@ -65,9 +120,15 @@ instance Show Fn where
 
 data Type
   = Word
+  | Long
+  | Float
+  | Double
 
 instance Show Type where
   show Word = "w"
+  show Long = "l"
+  show Float = "s"
+  show Double = "d"
 
 addFn :: Fn -> IR -> IR
 addFn f (IR fs) = IR (f : fs)

@@ -9,7 +9,7 @@ data Error
 
 instance Show Error where
   show (Error n e) =
-    "! failed to run"
+    "! failed to run "
       ++ enclosed "`" n
       ++ ": "
       ++ ioeGetErrorString e

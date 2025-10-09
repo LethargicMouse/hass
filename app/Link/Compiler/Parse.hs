@@ -3,7 +3,7 @@
 module Link.Compiler.Parse (parse, ast) where
 
 import BaseFix (head)
-import Control.Applicative (many, (<|>))
+import Control.Applicative (many, some, (<|>))
 import Control.Monad (unless, when)
 import Control.Monad.Except (ExceptT, MonadError, liftEither, modifyError, runExceptT, throwError)
 import Control.Monad.Reader (MonadReader, ReaderT, asks, runReaderT)
@@ -11,11 +11,13 @@ import Control.Monad.State (MonadState, StateT, evalStateT, gets, modify)
 import Control.Monad.Writer (Writer, runWriter, tell)
 import Data.Char (isAlpha, isDigit, isSpace)
 import Data.List (isPrefixOf)
-import Link.AST (AST (AST), Block (..), Expr (..), Fn (Fn), Header (..), Item (..), Type (..), needsSemicolon)
+import Data.Set (singleton)
+import Link.AST (AST (AST), Block (..), CallExpr (CallExpr), Expr (..), Fn (Fn), Header (..), Item (..), LetExpr (..), Type (..), needsSemicolon)
 import Link.Compiler.Parse.Error (Error (Error))
-import Source (Code (..), Info (srcName), Source (Source), codeLines, pos, text)
+import Source (Code (..), Info (srcName), Source (Source), codeLines, nextChar, pos, text)
 import Source.Pos (Pos, nextPos)
 import Source.View (View (View), Viewed (..))
+import String.Enclosed (enclosed)
 import Prelude hiding (head)
 
 parse :: (MonadError Error m) => Parse a -> Source -> m a
@@ -51,12 +53,15 @@ viewed p = do
   pure (Viewed v a)
 
 name :: Parse String
-name = do
+name = name' <|> failParse "name"
+
+name' :: Parse String
+name' = do
   skipSpaces
   t <- gets (takeWhile isNameChar . text)
   if not (null t) && isName1Char (head t)
     then t <$ consume (length t)
-    else failParse "name"
+    else throwError ()
 
 skipSpaces :: Parse ()
 skipSpaces = modify (Code . dropWhile (isSpace . snd) . unCode)
@@ -68,12 +73,15 @@ isNameChar :: Char -> Bool
 isNameChar c = isName1Char c || isDigit c
 
 str :: String -> Parse ()
-str s = do
+str s = str' s <|> failParse (enclosed "`" s)
+
+str' :: String -> Parse ()
+str' s = do
   skipSpaces
   t <- gets text
   if s `isPrefixOf` t
     then consume (length s)
-    else failParse s
+    else throwError ()
 
 consume :: (MonadState Code m) => Int -> m ()
 consume n = modify (Code . drop n . unCode)
@@ -92,7 +100,59 @@ stmt = do
   e <$ when (needsSemicolon e) (str ";")
 
 expr :: Parse Expr
-expr = Unit <$ str "()"
+expr =
+  Unit <$ str' "()"
+    <|> Let <$> letExpr
+    <|> Call <$> callExpr
+    <|> Var <$> varExpr
+    <|> Str <$> strLiteral
+    <|> Int <$> intLiteral
+    <|> failParse "expr"
+
+intLiteral :: Parse Integer
+intLiteral = read <$> some (satisfy isDigit)
+
+callExpr :: Parse CallExpr
+callExpr =
+  CallExpr
+    <$ name'
+    <* str "("
+    <* manySep "," expr
+    <* str ")"
+
+manySep :: String -> Parse a -> Parse [a]
+manySep c p = someSep c p <|> pure []
+
+someSep :: String -> Parse a -> Parse [a]
+someSep c p = (:) <$> p <*> manySep c p
+
+strLiteral :: Parse String
+strLiteral =
+  read . enclosed "\""
+    <$ str' "\""
+    <*> many strChar
+    <* str "\""
+
+strChar :: Parse Char
+strChar = satisfy (not . flip elem ['\\', '"'])
+
+satisfy :: (Char -> Bool) -> Parse Char
+satisfy p = do
+  c <- gets nextChar
+  if p c
+    then c <$ consume 1
+    else throwError ()
+
+varExpr :: Parse String
+varExpr = name'
+
+letExpr :: Parse LetExpr
+letExpr =
+  LetExpr
+    <$ str' "let"
+    <*> name
+    <* str "="
+    <*> expr
 
 eof :: Parse ()
 eof = do
@@ -105,7 +165,7 @@ eof = do
 failParse :: String -> Parse a
 failParse msg = do
   p <- gets pos
-  tell . Error [msg] =<< at p
+  tell . Error (singleton msg) =<< at p
   throwError ()
 
 at :: (MonadReader Info m) => Pos -> m View
