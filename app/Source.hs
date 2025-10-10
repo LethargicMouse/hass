@@ -9,10 +9,10 @@ module Source (
 )
 where
 
-import BaseFix (head)
+import BaseFix (head, readFile)
 import Data.Vector (Vector, fromList)
 import Source.Pos (Pos, posify)
-import Prelude hiding (head)
+import Prelude hiding (head, readFile)
 
 data Source
   = Source Info Code

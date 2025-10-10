@@ -3,9 +3,10 @@
 
 module Link.Compiler.Build (build) where
 
+import Control.Lens (assign, use, (^.))
 import Control.Monad.Except (MonadError, modifyError, throwError)
 import Control.Monad.Reader (runReaderT)
-import Control.Monad.State (MonadState, execStateT, gets, modify)
+import Control.Monad.State (MonadState, execStateT)
 import Data.Map (Map, insert)
 import qualified Data.Map as M
 import Link.AST (AST (AST), Item)
@@ -24,9 +25,9 @@ import String.Enclosed (enclosed)
 
 build :: (MonadError Error m) => Source -> m IR
 build s = do
-  a <- modifyError P $ parse ast s
-  p <- modifyError AE $ fromAST a
-  i <- modifyError A $ analyse `runReaderT` p
+  a <- modifyError P (parse ast s)
+  p <- modifyError AE (fromAST a)
+  i <- modifyError A (analyse `runReaderT` p)
   pure (generate i p)
 
 fromAST :: (MonadError AlreadyExists m) => AST -> m Program
@@ -34,30 +35,30 @@ fromAST (AST n is) = mapM_ addItem is `execStateT` empty n
 
 addItem :: (MonadState Program m, MonadError AlreadyExists m) => Item -> m ()
 addItem f = do
-  is <- gets items
+  is <- use items
   is' <- add f is
-  modify (\p -> p {items = is'})
+  assign items is'
 
 add ::
-  ( Named a,
-    MonadError AlreadyExists m,
-    HasView a,
-    OfKind a
+  ( Named a
+  , MonadError AlreadyExists m
+  , HasView a
+  , OfKind a
   ) =>
   a ->
   Map String a ->
   m (Map String a)
 add a m =
-  let n = name a
+  let n = a ^. name
    in case M.lookup n m of
         Nothing -> pure (insert n a m)
         Just a' ->
           throwError $
             AlreadyExists
-              (view a)
+              (a ^. view)
               (kind a)
               n
-              (view a')
+              (a' ^. view)
 
 data AlreadyExists
   = AlreadyExists View String String View

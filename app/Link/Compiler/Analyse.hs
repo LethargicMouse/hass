@@ -2,23 +2,24 @@
 
 module Link.Compiler.Analyse (analyse, Error) where
 
+import Control.Lens (to, view)
 import Control.Monad.Except (MonadError, modifyError, throwError)
-import Control.Monad.Reader (MonadReader, asks)
-import qualified Data.Map as M
-import Link.Program (Program (..))
-import Link.Program.Info (Info (Info))
+import Control.Monad.Reader (MonadReader)
+import Control.Monad.State (execStateT)
+import Data.Map ((!?))
+import Link.Program (Program (..), items, name)
+import Link.Program.Info (Info, empty)
 import String.Enclosed (enclosed)
 
 analyse :: (MonadReader Program m, MonadError Error m) => m Info
-analyse = do
+analyse = flip execStateT empty $ do
   modifyError NM checkMain
-  pure Info
 
 checkMain :: (MonadReader Program m, MonadError NoMain m) => m ()
 checkMain = do
-  mm <- asks (M.lookup "main" . items)
+  mm <- view $ items . to (!? "main")
   case mm of
-    Nothing -> asks name >>= throwError . NoMain
+    Nothing -> view name >>= throwError . NoMain
     Just _ -> pure ()
 
 newtype Error

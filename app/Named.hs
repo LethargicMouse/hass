@@ -1,4 +1,6 @@
 module Named (Named (..)) where
 
+import Control.Lens (Lens')
+
 class Named a where
-  name :: a -> String
+  name :: Lens' a String

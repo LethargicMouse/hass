@@ -1,11 +1,15 @@
-module Source.View
-  ( View (..),
-    fakeView,
-    HasView (..),
-    Viewed (..),
-  )
+{-# LANGUAGE TemplateHaskell #-}
+
+module Source.View (
+  View (..),
+  fakeView,
+  HasView (..),
+  Viewed (Viewed),
+  unwrap,
+)
 where
 
+import Control.Lens (Lens', makeLenses)
 import Data.Hashable (Hashable (hashWithSalt))
 import Data.Vector (Vector, empty, (!))
 import Source.Pos (Pos (..), startPos)
@@ -13,10 +17,10 @@ import String.Enclosed (enclosed)
 
 data View
   = View
-  { srcName :: String,
-    start :: Pos,
-    end :: Pos,
-    code :: Vector String
+  { srcName :: String
+  , start :: Pos
+  , end :: Pos
+  , code :: Vector String
   }
 
 instance Eq View where
@@ -43,8 +47,8 @@ showCode (Pos sl ss) (Pos el es) ls
         ++ underline ss (length l1)
         ++ concatMap (\i -> line i $ ls ! (i - 1)) [sl + 1 .. el]
         ++ underline 1 es
-  where
-    l1 = ls ! (sl - 1)
+ where
+  l1 = ls ! (sl - 1)
 
 underline :: Int -> Int -> String
 underline a b = "\n     |" ++ replicate a ' ' ++ replicate (b - a) '`'
@@ -59,9 +63,14 @@ fakeView :: View
 fakeView = View "<unknown>" startPos startPos empty
 
 class HasView a where
-  view :: a -> View
+  view :: Lens' a View
 
-data Viewed a = Viewed {_view :: View, un :: a}
+data Viewed a = Viewed {_view_ :: View, _unwrap :: a}
+
+makeLenses ''Viewed
 
 instance HasView (Viewed a) where
-  view = _view
+  view = view_
+
+instance Functor Viewed where
+  fmap f (Viewed v a) = Viewed v (f a)

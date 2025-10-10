@@ -2,21 +2,25 @@
 {-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE RankNTypes #-}
 {-# LANGUAGE TemplateHaskell #-}
+{-# LANGUAGE TupleSections #-}
 
 module Link.Compiler.Generate (generate) where
 
-import Control.Lens (Lens', assign, makeLenses, modifying, use, view)
-import Control.Monad.Reader (MonadReader, asks, runReaderT)
+import Control.Lens (Lens', assign, makeLenses, modifying, to, use, (^.))
+import qualified Control.Lens as L
+import Control.Monad.Reader (MonadReader, runReaderT)
 import Control.Monad.State (MonadState, execState)
+import Data.Hashable (hash)
 import Data.Map (insert, (!))
-import Link.AST (Block (..), CallExpr (CallExpr), Expr (..), Fn (..), LetExpr (..), Type (..), asFn, retType)
+import Link.AST (AtomExpr (..), Block (..), CallExpr (CallExpr), Expr (..), FieldExpr (..), Fn, LetExpr (..), Type (..), asFn, asName, body, header, retType)
 import Link.Compiler.Generate.Stmts (ExprGen, addStmt, addStr, addTmp, newStmtsGen, stmts, vars)
 import Link.Program (Program, items)
-import Link.Program.Info (Info)
+import Link.Program.Info (Info, offsets, types)
 import Named (name)
 import Qbe.Ir (IR, addFn, empty)
 import qualified Qbe.Ir as IR
-import Zoom (zoom)
+import Source.View (unwrap, view)
+import Zoom (magnify, zoom)
 
 data Gen
   = Gen
@@ -24,14 +28,21 @@ data Gen
   , _result :: IR
   }
 
+data Input
+  = Input
+  { _info :: Info
+  , _program :: Program
+  }
+
 makeLenses ''Gen
+makeLenses ''Input
 
 generate :: Info -> Program -> IR
-generate _ p =
-  view result $
-    walkProgram
-      `runReaderT` p
-      `execState` newGen
+generate i p =
+  walkProgram
+    `runReaderT` Input i p
+    `execState` newGen
+    ^. result
 
 newGen :: Gen
 newGen =
@@ -39,10 +50,10 @@ newGen =
     newStmtsGen
     empty
 
-walkProgram :: (MonadReader Program m, MonadState Gen m) => m ()
+walkProgram :: (MonadReader Input m, MonadState Gen m) => m ()
 walkProgram = do
-  mf <- asks (asFn . (! "main") . items)
-  mf' <- walkFn (fnRequest mf)
+  mf <- L.view (program . items . to (! "main") . to asFn)
+  mf' <- magnify info $ walkFn (fnRequest mf)
   modifying result (addFn mf')
 
 fnRequest :: Fn -> FnRequest
@@ -51,28 +62,50 @@ fnRequest f =
     { fn = f
     }
 
-walkFn :: (MonadState Gen m) => FnRequest -> m IR.Fn
+walkFn :: (MonadState Gen m, MonadReader Info m) => FnRequest -> m IR.Fn
 walkFn (FnRequest f) = do
-  let t = genType (retType $ header f)
-  let n = name f
+  let t = IR.basicAbi $ genType (f ^. header . retType)
+  let n = f ^. name
   ss <- replace (stmtsGen . stmts) [IR.Label "start"]
-  zoom stmtsGen (walkBlock $ body f)
+  zoom stmtsGen (walkBlock $ f ^. body)
   ss' <- replace (stmtsGen . stmts) ss
   pure (IR.Fn t n $ reverse ss')
 
-walkBlock :: (MonadState ExprGen m) => Block -> m ()
+walkBlock :: (MonadState ExprGen m, MonadReader Info m) => Block -> m ()
 walkBlock (Block ss r) = do
   mapM_ walkExpr ss
   walkRet r
 
-walkExpr :: (MonadState ExprGen m) => Expr -> m Int
-walkExpr e = case e of
-  Unit -> walkUnit
-  Let l -> walkLet l
-  Var v -> walkVar v
-  Call c -> walkCall c
-  Str s -> walkStr s
-  Int i -> walkInt i
+walkExpr :: (MonadState ExprGen m, MonadReader Info m) => Expr -> m Int
+walkExpr (Atomic e) = walkAtom e
+walkExpr (Field e) = walkField e
+
+walkField :: (MonadState ExprGen m, MonadReader Info m) => FieldExpr -> m Int
+walkField (FieldExpr e f) = do
+  i <- walkExpr (e ^. unwrap)
+  o <- offset (e ^. view . to hash) f
+  i' <- addTmp
+  addStmt . IR.Bin $
+    IR.BinStmt
+      (tmp i')
+      IR.Word
+      (IR.Tmp $ tmp i)
+      IR.Add
+      (IR.Int o)
+  pure i'
+
+offset :: (MonadReader Info m) => Int -> String -> m Int
+offset i n = do
+  s <- L.view (types . to (! i) . to asName)
+  L.view (offsets . to (! s) . to (! n))
+
+walkAtom :: (MonadState ExprGen m, MonadReader Info m) => AtomExpr -> m Int
+walkAtom Unit = walkUnit
+walkAtom (Let e) = walkLet e
+walkAtom (Call e) = walkCall e
+walkAtom (Var e) = walkVar e
+walkAtom (Str e) = walkStr e
+walkAtom (Int e) = walkInt e
 
 walkStr :: (MonadState ExprGen m) => String -> m Int
 walkStr s = do
@@ -80,7 +113,7 @@ walkStr s = do
   j <- addTmp
   addStmt . IR.Alloc $
     IR.AllocStmt
-      _
+      (tmp j)
       8
       16
   addStmt . IR.Store $
@@ -89,8 +122,8 @@ walkStr s = do
       (IR.Const $ mkConst i)
       (IR.Tmp $ tmp j)
   j' <- addTmp
-  addStmt $
-    IR.Add (tmp j') IR.Long (IR.Tmp $ tmp j) (IR.Int 8)
+  addStmt . IR.Bin $
+    IR.BinStmt (tmp j') IR.Long (IR.Tmp $ tmp j) IR.Add (IR.Int 8)
   addStmt . IR.Store $
     IR.StoreStmt
       (IR.Basic IR.Long)
@@ -101,20 +134,22 @@ walkStr s = do
 mkConst :: Int -> String
 mkConst = ('c' :) . show
 
-walkCall :: (MonadState ExprGen m) => CallExpr -> m Int
-walkCall (CallExpr _ as) = do
+walkCall :: (MonadState ExprGen m, MonadReader Info m) => CallExpr -> m Int
+walkCall (CallExpr n as) = do
   is <- mapM walkExpr as
-  addStmt $
-    IR.Call
-      _
-      _
-      _
-      _
+  i <- addTmp
+  addStmt . IR.Call $
+    IR.CallStmt
+      (tmp i)
+      IR.abiWord
+      (IR.Const n)
+      ((IR.abiWord,) . IR.Tmp . tmp <$> is)
+  pure i
 
 walkVar :: (MonadState ExprGen m) => String -> m Int
 walkVar n = (! n) <$> use vars
 
-walkLet :: (MonadState ExprGen m) => LetExpr -> m Int
+walkLet :: (MonadState ExprGen m, MonadReader Info m) => LetExpr -> m Int
 walkLet (LetExpr n e) = do
   i <- walkExpr e
   modifying vars (insert n i)
@@ -133,7 +168,7 @@ walkInt a = do
       (IR.Int $ fromInteger a)
   pure i
 
-walkRet :: (MonadState ExprGen m) => Expr -> m ()
+walkRet :: (MonadState ExprGen m, MonadReader Info m) => Expr -> m ()
 walkRet e = do
   i <- walkExpr e
   addStmt (IR.Ret $ IR.Tmp $ tmp i)
@@ -144,8 +179,9 @@ tmp = ('t' :) . show
 replace :: (MonadState s m) => Lens' s a -> a -> m a
 replace l a = use l <* assign l a
 
-genType :: Type -> IR.Type
-genType Void = IR.Word
+genType :: Type -> IR.AbiType
+genType Void = IR.abiWord
+genType (Name n) = IR.Name n
 
 newtype FnRequest = FnRequest
   { fn :: Fn

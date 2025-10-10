@@ -13,6 +13,10 @@ module Qbe.Ir (
   BinOp (..),
   AllocStmt (..),
   BinStmt (..),
+  CallStmt (..),
+  AbiType (..),
+  abiWord,
+  basicAbi,
 )
 where
 
@@ -79,6 +83,34 @@ data BinStmt
 instance Show BinStmt where
   show (BinStmt i t a o b) = "  %" ++ i ++ " =" ++ show t ++ " " ++ show o ++ " " ++ show a ++ ", " ++ show b
 
+data AbiType
+  = SignedByte
+  | Extra ExType
+  | SignedHalf
+  | Name String
+
+instance Show AbiType where
+  show SignedByte = "sb"
+  show SignedHalf = "sh"
+  show (Extra (Basic t)) = show t
+  show (Extra t) = 'u' : show t
+  show (Name n) = ':' : n
+
+data CallStmt
+  = CallStmt String AbiType Value [(AbiType, Value)]
+
+instance Show CallStmt where
+  show (CallStmt i t v as) =
+    "  %"
+      ++ i
+      ++ " ="
+      ++ show t
+      ++ " call "
+      ++ show v
+      ++ "("
+      ++ concatMap (\(at, a) -> show at ++ " " ++ show a ++ ", ") as
+      ++ ")"
+
 data Stmt
   = Label String
   | Ret Value
@@ -86,6 +118,7 @@ data Stmt
   | Store StoreStmt
   | Alloc AllocStmt
   | Bin BinStmt
+  | Call CallStmt
 
 instance Show Stmt where
   show (Label s) = '@' : s
@@ -94,6 +127,7 @@ instance Show Stmt where
   show (Copy c) = show c
   show (Alloc s) = show s
   show (Bin s) = show s
+  show (Call s) = show s
 
 data Value
   = Tmp String
@@ -132,3 +166,17 @@ instance Show Type where
 
 addFn :: Fn -> IR -> IR
 addFn f (IR fs) = IR (f : fs)
+
+abiWord :: AbiType
+abiWord = Extra (Basic Word)
+
+basicAbi :: AbiType -> Type
+basicAbi = basicExtra . extraAbi
+
+extraAbi :: AbiType -> ExType
+extraAbi (Extra t) = t
+extraAbi _ = undefined
+
+basicExtra :: ExType -> Type
+basicExtra (Basic t) = t
+basicExtra _ = undefined

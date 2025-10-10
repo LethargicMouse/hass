@@ -4,19 +4,20 @@ module Link.Compiler.Parse (parse, ast) where
 
 import BaseFix (head)
 import Control.Applicative (many, some, (<|>))
+import Control.Lens (view)
 import Control.Monad (unless, when)
 import Control.Monad.Except (ExceptT, MonadError, liftEither, modifyError, runExceptT, throwError)
 import Control.Monad.Reader (MonadReader, ReaderT, asks, runReaderT)
 import Control.Monad.State (MonadState, StateT, evalStateT, gets, modify)
 import Control.Monad.Writer (Writer, runWriter, tell)
 import Data.Char (isAlpha, isDigit, isSpace)
-import Data.List (isPrefixOf)
+import Data.List (foldl', isPrefixOf)
 import Data.Set (singleton)
-import Link.AST (AST (AST), Block (..), CallExpr (CallExpr), Expr (..), Fn (Fn), Header (..), Item (..), LetExpr (..), Type (..), needsSemicolon)
+import Link.AST (AST (AST), AtomExpr (..), Block (..), CallExpr (CallExpr), Expr (..), Fn (Fn), Header (..), Item (..), LetExpr (..), Postfix (FieldPostfix), Type (..), addPostfix, needsSemicolon)
 import Link.Compiler.Parse.Error (Error (Error))
 import Source (Code (..), Info (srcName), Source (Source), codeLines, nextChar, pos, text)
 import Source.Pos (Pos, nextPos)
-import Source.View (View (View), Viewed (..))
+import Source.View (View (View), Viewed (..), unwrap)
 import String.Enclosed (enclosed)
 import Prelude hiding (head)
 
@@ -91,16 +92,22 @@ block =
   Block
     <$ str "{"
     <*> many stmt
-    <*> (expr <|> pure Unit)
+    <*> (view unwrap <$> expr <|> pure (Atomic Unit))
     <* str "}"
 
 stmt :: Parse Expr
 stmt = do
-  e <- expr
+  e <- view unwrap <$> expr
   e <$ when (needsSemicolon e) (str ";")
 
-expr :: Parse Expr
-expr =
+expr :: Parse (Viewed Expr)
+expr = foldl' addPostfix . fmap Atomic <$> viewed atom <*> many (viewed postfix)
+
+postfix :: Parse Postfix
+postfix = FieldPostfix <$ str "." <*> name
+
+atom :: Parse AtomExpr
+atom =
   Unit <$ str' "()"
     <|> Let <$> letExpr
     <|> Call <$> callExpr
@@ -115,16 +122,16 @@ intLiteral = read <$> some (satisfy isDigit)
 callExpr :: Parse CallExpr
 callExpr =
   CallExpr
-    <$ name'
+    <$> name'
     <* str "("
-    <* manySep "," expr
+    <*> manySep "," (view unwrap <$> expr)
     <* str ")"
 
 manySep :: String -> Parse a -> Parse [a]
 manySep c p = someSep c p <|> pure []
 
 someSep :: String -> Parse a -> Parse [a]
-someSep c p = (:) <$> p <*> manySep c p
+someSep c p = (:) <$> p <*> many (str c *> p)
 
 strLiteral :: Parse String
 strLiteral =
@@ -152,7 +159,7 @@ letExpr =
     <$ str' "let"
     <*> name
     <* str "="
-    <*> expr
+    <*> (view unwrap <$> expr)
 
 eof :: Parse ()
 eof = do
