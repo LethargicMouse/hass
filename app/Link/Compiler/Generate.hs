@@ -12,6 +12,7 @@ import Control.Monad.Reader (MonadReader, runReaderT)
 import Control.Monad.State (MonadState, execState)
 import Data.Hashable (hash)
 import Data.Map (insert, (!))
+import Debug.Trace (trace)
 import Link.AST (AtomExpr (..), Block (..), CallExpr (CallExpr), Expr (..), FieldExpr (..), Fn, LetExpr (..), Type (..), asFn, asName, body, header, retType)
 import Link.Compiler.Generate.Stmts (ExprGen, addStmt, addStr, addTmp, newStmtsGen, stmts, vars)
 import Link.Program (Program, items)
@@ -19,7 +20,7 @@ import Link.Program.Info (Info, offsets, types)
 import Named (name)
 import Qbe.Ir (IR, addFn, empty)
 import qualified Qbe.Ir as IR
-import Source.View (unwrap, view)
+import Source.View (Viewed, un, unwrap, view)
 import Zoom (magnify, zoom)
 
 data Gen
@@ -40,7 +41,7 @@ makeLenses ''Input
 generate :: Info -> Program -> IR
 generate i p =
   walkProgram
-    `runReaderT` Input i p
+    `runReaderT` Input (trace (show i) i) p
     `execState` newGen
     ^. result
 
@@ -83,7 +84,7 @@ walkExpr (Field e) = walkField e
 walkField :: (MonadState ExprGen m, MonadReader Info m) => FieldExpr -> m Int
 walkField (FieldExpr e f) = do
   i <- walkExpr (e ^. unwrap)
-  o <- offset (e ^. view . to hash) f
+  o <- offset (e ^. view . to hash) (un f)
   i' <- addTmp
   addStmt . IR.Bin $
     IR.BinStmt
@@ -142,12 +143,12 @@ walkCall (CallExpr n as) = do
     IR.CallStmt
       (tmp i)
       IR.abiWord
-      (IR.Const n)
+      (IR.Const $ un n)
       ((IR.abiWord,) . IR.Tmp . tmp <$> is)
   pure i
 
-walkVar :: (MonadState ExprGen m) => String -> m Int
-walkVar n = (! n) <$> use vars
+walkVar :: (MonadState ExprGen m) => Viewed String -> m Int
+walkVar n = (! un n) <$> use vars
 
 walkLet :: (MonadState ExprGen m, MonadReader Info m) => LetExpr -> m Int
 walkLet (LetExpr n e) = do
@@ -182,6 +183,7 @@ replace l a = use l <* assign l a
 genType :: Type -> IR.AbiType
 genType Void = IR.abiWord
 genType (Name n) = IR.Name n
+genType I32 = IR.abiWord
 
 newtype FnRequest = FnRequest
   { fn :: Fn

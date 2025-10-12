@@ -6,10 +6,11 @@ module Source.View (
   HasView (..),
   Viewed (Viewed),
   unwrap,
+  un,
 )
 where
 
-import Control.Lens (Lens', makeLenses)
+import Control.Lens (Lens', makeLenses, (^.))
 import Data.Hashable (Hashable (hashWithSalt))
 import Data.Vector (Vector, empty, (!))
 import Source.Pos (Pos (..), startPos)
@@ -74,3 +75,6 @@ instance HasView (Viewed a) where
 
 instance Functor Viewed where
   fmap f (Viewed v a) = Viewed v (f a)
+
+un :: Viewed a -> a
+un = (^. unwrap)

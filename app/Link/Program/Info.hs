@@ -17,6 +17,7 @@ data Info
   { _types :: Map Int Type
   , _offsets :: Map String (Map String Int)
   }
+  deriving (Show)
 
 makeLenses ''Info
 

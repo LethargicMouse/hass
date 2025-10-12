@@ -6,7 +6,7 @@ import Link.Compiler (runLinkCompiler)
 import Script (runScript)
 
 toRun :: ToRun
-toRun = LinkCompiler
+toRun = ExcelPro
 
 data ToRun
   = LinkCompiler

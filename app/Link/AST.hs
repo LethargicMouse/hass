@@ -43,6 +43,12 @@ data Header
 data Type
   = Void
   | Name String
+  | I32
+
+instance Show Type where
+  show Void = "()"
+  show (Name n) = n
+  show I32 = "i32"
 
 data Fn
   = Fn {_header :: Header, _body :: Block}
@@ -54,19 +60,19 @@ data AtomExpr
   = Unit
   | Let LetExpr
   | Call CallExpr
-  | Var String
+  | Var (Viewed String)
   | Str String
   | Int Integer
 
 data FieldExpr
-  = FieldExpr (Viewed Expr) String
+  = FieldExpr (Viewed Expr) (Viewed String)
 
 data Expr
   = Atomic AtomExpr
   | Field FieldExpr
 
 data CallExpr
-  = CallExpr String [Expr]
+  = CallExpr (Viewed String) [Expr]
 
 data LetExpr
   = LetExpr String Expr
@@ -108,7 +114,7 @@ addPostfix e (Viewed v (FieldPostfix f)) =
     Field (FieldExpr e f)
 
 newtype Postfix
-  = FieldPostfix String
+  = FieldPostfix (Viewed String)
 
 asName :: Type -> String
 asName (Name n) = n

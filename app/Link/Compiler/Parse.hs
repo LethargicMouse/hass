@@ -47,6 +47,7 @@ header = Header <$ str "fn" <*> viewed name <* str "(" <* str ")" <*> pure Void
 
 viewed :: Parse a -> Parse (Viewed a)
 viewed p = do
+  skipSpaces
   s <- gets pos
   a <- p
   e <- gets pos
@@ -104,7 +105,7 @@ expr :: Parse (Viewed Expr)
 expr = foldl' addPostfix . fmap Atomic <$> viewed atom <*> many (viewed postfix)
 
 postfix :: Parse Postfix
-postfix = FieldPostfix <$ str "." <*> name
+postfix = FieldPostfix <$ str "." <*> viewed name
 
 atom :: Parse AtomExpr
 atom =
@@ -122,7 +123,7 @@ intLiteral = read <$> some (satisfy isDigit)
 callExpr :: Parse CallExpr
 callExpr =
   CallExpr
-    <$> name'
+    <$> viewed name'
     <* str "("
     <*> manySep "," (view unwrap <$> expr)
     <* str ")"
@@ -150,8 +151,8 @@ satisfy p = do
     then c <$ consume 1
     else throwError ()
 
-varExpr :: Parse String
-varExpr = name'
+varExpr :: Parse (Viewed String)
+varExpr = viewed name'
 
 letExpr :: Parse LetExpr
 letExpr =
