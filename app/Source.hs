@@ -1,17 +1,15 @@
+-- Provides data type for processing any kind of source code (with metadata like source name)
 module Source (
   Source (..),
   Info (..),
-  Code (..),
   fromFile,
-  text,
-  pos,
-  nextChar,
 )
 where
 
-import BaseFix (head, readFile)
+import BaseFix (readFile)
 import Data.Vector (Vector, fromList)
-import Source.Pos (Pos, posify)
+import Source.Code (Code (..))
+import Source.Pos (posify)
 import Prelude hiding (head, readFile)
 
 data Source
@@ -34,14 +32,3 @@ data Info
   { srcName :: String
   , codeLines :: Vector String
   }
-
-newtype Code = Code {unCode :: [(Pos, Char)]}
-
-text :: Code -> String
-text = map snd . unCode
-
-nextChar :: Code -> Char
-nextChar = head . text
-
-pos :: Code -> Pos
-pos = fst . head . unCode

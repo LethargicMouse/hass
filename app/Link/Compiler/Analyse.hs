@@ -13,11 +13,13 @@ import Control.Monad.Writer (MonadWriter, tell)
 import Data.Hashable (Hashable (hash))
 import Data.Map (Map, elems, insert, (!?))
 import qualified Data.Map as M
-import Link.AST (AtomExpr (..), Block (Block), CallExpr (..), Expr (Atomic, Field), FieldExpr (..), Fn, Header, Item (..), LetExpr (LetExpr), Type (..), body, header, retType)
+import Enclosed (enclosed)
+import Link.AST (AtomExpr (..), Block (Block), CallExpr (..), Expr (Atomic, Field), Extern, FieldExpr (..), Fn, Header, Item (..), LetExpr (LetExpr), Type (..), body, header, retType)
 import Link.Program (Program (..), TypeItem (..), fields, items, name, typeItems)
 import Link.Program.Info (Info, empty, types)
-import Source.View (Viewed, un, unwrap, view)
-import String.Enclosed (enclosed)
+import OfKind (kind)
+import Source.View (Viewed, un, view)
+import Unwrap (unwrap)
 import Zoom (storeError, storeError_, zoom)
 
 type Vars = Map String Type'
@@ -53,6 +55,10 @@ checkItem ::
   Item ->
   m ()
 checkItem (FnItem f) = checkFn f
+checkItem (ExItem e) = checkExtern e
+
+checkExtern :: (Applicative m) => Extern -> m ()
+checkExtern _ = pure ()
 
 checkFn ::
   ( MonadReader Program m
@@ -139,14 +145,14 @@ checkCall ::
   m Type'
 checkCall (CallExpr n es) = do
   mapM_ checkExpr es
-  mh <- storeError ND (findHeader n)
+  mh <- storeError id (findHeader n)
   case mh of
     Nothing -> pure Error
     Just h -> pure (Real $ h ^. retType)
 
 findHeader ::
   ( MonadReader Program m
-  , MonadError NotDeclared m
+  , MonadError Error m
   ) =>
   Viewed String ->
   m Header
@@ -154,8 +160,11 @@ findHeader n = do
   mi <- L.view $ items . to (!? un n)
   case mi of
     Just (FnItem f) -> pure $ f ^. header
+    Just i ->
+      throwError . WK $
+        WrongKind n (kind i) "function"
     Nothing ->
-      throwError $
+      throwError . ND $
         NotDeclared n "function"
 
 checkLet ::
@@ -226,8 +235,24 @@ checkMain = do
     Nothing -> L.view name >>= throwError . NoMain
     Just _ -> pure ()
 
+data WrongKind
+  = WrongKind (Viewed String) String String
+
+instance Show WrongKind where
+  show (WrongKind n f e) =
+    "! error "
+      ++ show (n ^. view)
+      ++ "\n--! "
+      ++ enclosed "`" (un n)
+      ++ " is a "
+      ++ f
+      ++ ", but "
+      ++ e
+      ++ " was expected"
+
 data Error
   = NM NoMain
+  | WK WrongKind
   | ND NotDeclared
   | NF NoField
   | Es Error Error
@@ -243,6 +268,7 @@ instance Monoid Error where
 
 instance Show Error where
   show (NM e) = show e
+  show (WK e) = show e
   show (ND e) = show e
   show (NF e) = show e
   show (Es e1 e2) = show e1 ++ "\n\n" ++ show e2

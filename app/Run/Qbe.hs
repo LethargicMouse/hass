@@ -1,5 +1,6 @@
 module Run.Qbe (runQbe) where
-import Run.Process (runProcess)
+
+import Process (run)
 
 runQbe :: IO ()
-runQbe = runProcess "qbe" ["-o", "out.s", "out.qbe"]
+runQbe = run "qbe" ["-o", "out.s", "out.qbe"]

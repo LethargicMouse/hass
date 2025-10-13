@@ -1,24 +1,26 @@
-module Link.Compiler (runLinkCompiler) where
+module Link.Compiler (
+  run,
+) where
 
 import Die (die)
 import Link.Compiler.Args (Args (..), getArgs)
 import Link.Compiler.Build (build)
+import qualified Process
 import Qbe.Ir (dump)
 import Run.CC (runCC)
-import Run.Process (runProcess)
 import Run.Qbe (runQbe)
 import Source (Source, fromFile)
 
-runLinkCompiler :: IO ()
-runLinkCompiler = handle =<< getArgs
+run :: IO ()
+run = runWithArgs =<< getArgs
 
-handle :: Args -> IO ()
-handle (Args path) = compileAndRun =<< fromFile path
+runWithArgs :: Args -> IO ()
+runWithArgs (Args path) = compileAndRun =<< fromFile path
 
 compileAndRun :: Source -> IO ()
 compileAndRun s = do
   compile s
-  runProcess "./out" []
+  Process.run "./out" []
 
 compile :: Source -> IO ()
 compile s = do

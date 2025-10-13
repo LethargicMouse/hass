@@ -1,11 +1,13 @@
+{-# LANGUAGE FlexibleInstances #-}
+{-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE TemplateHaskell #-}
+{-# LANGUAGE TypeFamilies #-}
 
 module Source.View (
   View (..),
   fakeView,
   HasView (..),
   Viewed (Viewed),
-  unwrap,
   un,
 )
 where
@@ -13,8 +15,9 @@ where
 import Control.Lens (Lens', makeLenses, (^.))
 import Data.Hashable (Hashable (hashWithSalt))
 import Data.Vector (Vector, empty, (!))
+import Enclosed (enclosed)
 import Source.Pos (Pos (..), startPos)
-import String.Enclosed (enclosed)
+import Unwrap (Unwrap (..))
 
 data View
   = View
@@ -66,7 +69,7 @@ fakeView = View "<unknown>" startPos startPos empty
 class HasView a where
   view :: Lens' a View
 
-data Viewed a = Viewed {_view_ :: View, _unwrap :: a}
+data Viewed a = Viewed {_view_ :: View, _unwrap_ :: a}
 
 makeLenses ''Viewed
 
@@ -75,6 +78,9 @@ instance HasView (Viewed a) where
 
 instance Functor Viewed where
   fmap f (Viewed v a) = Viewed v (f a)
+
+instance Unwrap a (Viewed a) where
+  unwrap = unwrap_
 
 un :: Viewed a -> a
 un = (^. unwrap)

@@ -1,7 +1,7 @@
 module Run.Process.Error (Error (..)) where
 
 import Control.Exception (IOException)
-import String.Enclosed (enclosed)
+import Enclosed (enclosed)
 import System.IO.Error (ioeGetErrorString)
 
 data Error

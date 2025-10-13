@@ -2,11 +2,11 @@ module Main (main) where
 
 import Autoregression (runAutoregression)
 import Excel.Pro (runExcelPro)
-import Link.Compiler (runLinkCompiler)
+import qualified Link.Compiler
 import Script (runScript)
 
 toRun :: ToRun
-toRun = ExcelPro
+toRun = LinkCompiler
 
 data ToRun
   = LinkCompiler
@@ -17,6 +17,6 @@ data ToRun
 main :: IO ()
 main = case toRun of
   Autoregression -> runAutoregression
-  LinkCompiler -> runLinkCompiler
+  LinkCompiler -> Link.Compiler.run
   ExcelPro -> runExcelPro
   Script -> runScript

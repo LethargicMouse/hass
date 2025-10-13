@@ -1,6 +1,9 @@
+{-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE TemplateHaskell #-}
+{-# LANGUAGE TypeFamilies #-}
 
 module Link.AST (
+  Extern (Extern),
   Postfix (..),
   AST (..),
   Item (..),
@@ -23,16 +26,21 @@ module Link.AST (
 )
 where
 
-import Control.Lens (makeLenses)
+import Control.Lens (Lens', makeLenses)
 import Named (Named (..))
 import OfKind (OfKind (..))
-import Source.View (HasView (..), Viewed (Viewed), unwrap)
+import Source.View (HasView (..), Viewed (Viewed))
+import Unwrap (Unwrap (..))
 
 data AST
   = AST String [Item]
 
-newtype Item
+data Item
   = FnItem Fn
+  | ExItem Extern
+
+newtype Extern
+  = Extern {_unwrap_ :: Header}
 
 data Header
   = Header
@@ -79,20 +87,32 @@ data LetExpr
 
 makeLenses ''Fn
 makeLenses ''Header
+makeLenses ''Extern
+
+instance Unwrap Header Extern where
+  unwrap = unwrap_
+
+instance HasView Extern where
+  view = (unwrap :: Lens' Extern Header) . view
 
 asFn :: Item -> Fn
 asFn (FnItem f) = f
+asFn _ = undefined
 
 instance OfKind Item where
-  kind (FnItem f) = kind f
+  kind (FnItem _) = "function"
+  kind (ExItem _) = "extern item"
 
 instance HasView Item where
   view f (FnItem fn) = FnItem <$> view f fn
+  view f (ExItem ex) = ExItem <$> view f ex
 
 instance Named Item where
   name f (FnItem fn) = FnItem <$> name f fn
-instance OfKind Fn where
-  kind _ = "function"
+  name f (ExItem ex) = ExItem <$> name f ex
+
+instance Named Extern where
+  name = (unwrap :: Lens' Extern Header) . name
 
 instance HasView Fn where
   view = header . view

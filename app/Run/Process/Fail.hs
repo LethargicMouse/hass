@@ -1,15 +1,15 @@
 module Run.Process.Fail (Fail (..)) where
 
+import Enclosed (enclosed)
 import String.Block (block)
-import String.Enclosed (enclosed)
 
 data Fail
   = -- name, exit code, stdout, stderr
   Fail
-  { name :: String,
-    code :: Int,
-    stdout :: String,
-    stderr :: String
+  { name :: String
+  , code :: Int
+  , stdout :: String
+  , stderr :: String
   }
 
 instance Show Fail where

@@ -2,7 +2,7 @@ module BaseFix.ReadFile (readFile) where
 
 import Control.Exception (IOException, try)
 import Die (die)
-import String.Enclosed (enclosed)
+import Enclosed (enclosed)
 import System.IO.Error (ioeGetErrorString)
 import Prelude hiding (readFile)
 import qualified Prelude as P

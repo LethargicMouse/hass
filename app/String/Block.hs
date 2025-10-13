@@ -1,6 +1,6 @@
 module String.Block (block) where
 
-import String.Enclosed (enclosed)
+import Enclosed (enclosed)
 
 block :: String -> String -> String
 block n s =

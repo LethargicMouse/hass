@@ -3,3 +3,5 @@ fn main() {
     write(1, msg.buf, msg.len);
   }
 
+extern fn write(u64, *u8, u64) u64;
+

@@ -20,7 +20,8 @@ import Link.Program.Info (Info, offsets, types)
 import Named (name)
 import Qbe.Ir (IR, addFn, empty)
 import qualified Qbe.Ir as IR
-import Source.View (Viewed, un, unwrap, view)
+import Source.View (Viewed, un, view)
+import Unwrap (unwrap)
 import Zoom (magnify, zoom)
 
 data Gen

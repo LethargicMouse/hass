@@ -1,6 +1,6 @@
 module Run.CC (runCC) where
 
-import Run.Process (runProcess)
+import Process (run)
 
 runCC :: IO ()
-runCC = runProcess "cc" ["-o", "out", "out.s"]
+runCC = run "cc" ["-o", "out", "out.s"]

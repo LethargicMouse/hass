@@ -10,19 +10,20 @@ import Control.Monad.State (MonadState, execStateT)
 import Control.Monad.Writer (runWriterT)
 import Data.Map (Map, insert)
 import qualified Data.Map as M
+import Enclosed (enclosed)
 import Link.AST (AST (AST), Item)
 import Link.Compiler.Analyse (analyse, success)
 import qualified Link.Compiler.Analyse as Analyse
 import Link.Compiler.Generate (generate)
-import Link.Compiler.Parse (ast, parse)
-import qualified Link.Compiler.Parse.Error as Parse
+import Link.Compiler.Parse (ast)
 import Link.Program (Program, empty, items)
 import Named (Named (..))
 import OfKind (OfKind (..))
 import Qbe.Ir (IR (..))
 import Source (Source)
+import Source.Parse (parse)
+import qualified Source.Parse.Error as Parse
 import Source.View (HasView (..), View)
-import String.Enclosed (enclosed)
 
 build :: (MonadError Error m) => Source -> m IR
 build s = do
