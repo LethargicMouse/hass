@@ -3,8 +3,9 @@
 -- provides a function to build a QBE `IR` from `Source`
 module Link.Compiler.Build (build) where
 
+import Combinators ((<!>))
 import Control.Lens (assign, use, (^.))
-import Control.Monad.Except (ExceptT, MonadError, modifyError, throwError)
+import Control.Monad.Except (MonadError, throwError)
 import Control.Monad.State (MonadState, execStateT)
 import Data.Map (Map, insert)
 import qualified Data.Map as M
@@ -29,9 +30,6 @@ build s = do
   p <- AE <!> structure a
   i <- A <!> analyse p
   pure (generate i p)
-
-(<!>) :: (MonadError e' m) => (e -> e') -> ExceptT e m a -> m a
-(<!>) = modifyError
 
 structure :: (MonadError AlreadyExists m) => AST -> m Program
 structure (AST n is) = mapM_ addItem is `execStateT` empty n

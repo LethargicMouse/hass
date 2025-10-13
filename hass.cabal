@@ -40,6 +40,7 @@ executable hass
       Run.Qbe,
       Source.Info.Getters,
       Source.Parse.Common.Name,
+      Combinators,
       Qbe.Ir,
       Run.CC,
       Link.Compiler.Build,
