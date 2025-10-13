@@ -5,11 +5,11 @@ module Link.Compiler.Analyse (analyse, Error, success) where
 
 import Control.Lens (makeLenses, modifying, to, (^.))
 import qualified Control.Lens as L
-import Control.Monad (void)
+import Control.Monad (unless, void)
 import Control.Monad.Except (MonadError, throwError)
-import Control.Monad.Reader (MonadReader)
+import Control.Monad.Reader (MonadReader, runReaderT)
 import Control.Monad.State (MonadState, execStateT, gets)
-import Control.Monad.Writer (MonadWriter, tell)
+import Control.Monad.Writer (MonadWriter, WriterT (runWriterT), tell)
 import Data.Hashable (Hashable (hash))
 import Data.Map (Map, elems, insert, (!?))
 import qualified Data.Map as M
@@ -36,8 +36,18 @@ data Checker
 
 makeLenses ''Checker
 
-analyse :: (MonadReader Program m, MonadWriter Error m) => m Info
-analyse = fmap (L.view result) . flip execStateT newChecker $ do
+analyse :: (MonadError Error m) => Program -> m Info
+analyse p = do
+  (c, e) <- runWriterT $ checkProgram `runReaderT` p `execStateT` newChecker
+  c ^. result <$ unless (success e) (throwError e)
+
+checkProgram ::
+  ( MonadReader Program m
+  , MonadWriter Error m
+  , MonadState Checker m
+  ) =>
+  m ()
+checkProgram = do
   storeError_ NM checkMain
   mapM_ checkItem . elems =<< L.view items
 

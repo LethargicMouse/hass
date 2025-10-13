@@ -1,18 +1,16 @@
 {-# LANGUAGE FlexibleContexts #-}
 
+-- provides a function to build a QBE `IR` from `Source`
 module Link.Compiler.Build (build) where
 
 import Control.Lens (assign, use, (^.))
-import Control.Monad (unless)
-import Control.Monad.Except (MonadError, modifyError, throwError)
-import Control.Monad.Reader (runReaderT)
+import Control.Monad.Except (ExceptT, MonadError, modifyError, throwError)
 import Control.Monad.State (MonadState, execStateT)
-import Control.Monad.Writer (runWriterT)
 import Data.Map (Map, insert)
 import qualified Data.Map as M
 import Enclosed (enclosed)
 import Link.AST (AST (AST), Item)
-import Link.Compiler.Analyse (analyse, success)
+import Link.Compiler.Analyse (analyse)
 import qualified Link.Compiler.Analyse as Analyse
 import Link.Compiler.Generate (generate)
 import Link.Compiler.Parse (ast)
@@ -27,14 +25,16 @@ import Source.View (HasView (..), View)
 
 build :: (MonadError Error m) => Source -> m IR
 build s = do
-  a <- modifyError P (parse ast s)
-  p <- modifyError AE (fromAST a)
-  (i, e) <- runWriterT $ analyse `runReaderT` p
-  unless (success e) $ throwError (A e)
+  a <- P <!> parse ast s
+  p <- AE <!> structure a
+  i <- A <!> analyse p
   pure (generate i p)
 
-fromAST :: (MonadError AlreadyExists m) => AST -> m Program
-fromAST (AST n is) = mapM_ addItem is `execStateT` empty n
+(<!>) :: (MonadError e' m) => (e -> e') -> ExceptT e m a -> m a
+(<!>) = modifyError
+
+structure :: (MonadError AlreadyExists m) => AST -> m Program
+structure (AST n is) = mapM_ addItem is `execStateT` empty n
 
 addItem :: (MonadState Program m, MonadError AlreadyExists m) => Item -> m ()
 addItem f = do
