@@ -1,3 +1,4 @@
+-- provides an error that `failParse` throws
 module Source.Parse.Error (
   Error (..),
 ) where

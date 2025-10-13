@@ -4,25 +4,17 @@
 module Link.Compiler.Build (build) where
 
 import Combinators ((<!>))
-import Control.Lens (assign, use, (^.))
-import Control.Monad.Except (MonadError, throwError)
-import Control.Monad.State (MonadState, execStateT)
-import Data.Map (Map, insert)
-import qualified Data.Map as M
-import Enclosed (enclosed)
-import Link.AST (AST (AST), Item)
+import Control.Monad.Except (MonadError)
+import Link.AST.Structure (structure)
+import Link.AST.Structure.Error (AlreadyExists)
 import Link.Compiler.Analyse (analyse)
 import qualified Link.Compiler.Analyse as Analyse
 import Link.Compiler.Generate (generate)
 import Link.Compiler.Parse (ast)
-import Link.Program (Program, empty, items)
-import Named (Named (..))
-import OfKind (OfKind (..))
 import Qbe.Ir (IR (..))
 import Source (Source)
 import Source.Parse (parse)
 import qualified Source.Parse.Error as Parse
-import Source.View (HasView (..), View)
 
 build :: (MonadError Error m) => Source -> m IR
 build s = do
@@ -30,49 +22,6 @@ build s = do
   p <- AE <!> structure a
   i <- A <!> analyse p
   pure (generate i p)
-
-structure :: (MonadError AlreadyExists m) => AST -> m Program
-structure (AST n is) = mapM_ addItem is `execStateT` empty n
-
-addItem :: (MonadState Program m, MonadError AlreadyExists m) => Item -> m ()
-addItem f = do
-  is <- use items
-  is' <- add f is
-  assign items is'
-
-add ::
-  ( Named a
-  , MonadError AlreadyExists m
-  , HasView a
-  , OfKind a
-  ) =>
-  a ->
-  Map String a ->
-  m (Map String a)
-add a m =
-  let n = a ^. name
-   in case M.lookup n m of
-        Nothing -> pure (insert n a m)
-        Just a' ->
-          throwError $
-            AlreadyExists
-              (a ^. view)
-              (kind a)
-              n
-              (a' ^. view)
-
-data AlreadyExists
-  = AlreadyExists View String String View
-
-instance Show AlreadyExists where
-  show (AlreadyExists v n k v') =
-    "! error "
-      ++ show v
-      ++ "\n--! "
-      ++ k
-      ++ enclosed " `" n
-      ++ "is already declared "
-      ++ show v'
 
 data Error
   = P Parse.Error
