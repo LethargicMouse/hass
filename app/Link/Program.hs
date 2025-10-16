@@ -1,5 +1,6 @@
 {-# LANGUAGE TemplateHaskell #-}
 
+-- provides data type to describe structured structured version of Link `AST`
 module Link.Program (
   Program (..),
   empty,
@@ -14,7 +15,8 @@ module Link.Program (
 import Control.Lens (makeLenses)
 import Data.Map (Map)
 import qualified Data.Map as M
-import Link.AST (Item, Type)
+import Link.AST.Item (Item)
+import Link.AST.Type (Type)
 
 data Program
   = Program

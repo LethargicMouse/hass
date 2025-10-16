@@ -1,12 +1,12 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# OPTIONS_GHC -Wno-incomplete-uni-patterns #-}
+{-# OPTIONS_GHC -Wno-unused-top-binds #-}
 
 module Excel.Pro (runExcelPro) where
 
 import Codec.Xlsx
 import Control.Lens
 import qualified Data.ByteString.Lazy as L
-import Die (dieOr)
 import Mean (mean)
 
 redFont :: Font

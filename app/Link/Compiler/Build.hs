@@ -5,12 +5,12 @@ module Link.Compiler.Build (build) where
 
 import Combinators ((<!>))
 import Control.Monad.Except (MonadError)
+import Link.AST.Parse (ast)
 import Link.AST.Structure (structure)
 import Link.AST.Structure.Error (AlreadyExists)
 import Link.Compiler.Analyse (analyse)
 import qualified Link.Compiler.Analyse as Analyse
 import Link.Compiler.Generate (generate)
-import Link.Compiler.Parse (ast)
 import Qbe.Ir (IR (..))
 import Source (Source)
 import Source.Parse (parse)

@@ -1,58 +1,18 @@
-{-# LANGUAGE FlexibleContexts #-}
-
--- provides `Parse` for Link `AST`
-module Link.Compiler.Parse (
-  ast,
-) where
+-- provides `Parse` for Link `Expr` AST
+module Link.AST.Expr.Parse (expr) where
 
 import Control.Applicative (many, some, (<|>))
 import Control.Lens (view)
-import Control.Monad (when)
-import Control.Monad.Reader (asks)
 import Data.Char (isDigit)
 import Data.List (foldl')
 import Enclosed (enclosed)
-import Link.AST (AST (AST), AtomExpr (..), Block (..), CallExpr (CallExpr), Expr (..), Extern (..), Fn (Fn), Header (..), Item (..), LetExpr (..), Postfix (FieldPostfix), Type (..), addPostfix, needsSemicolon)
-import Source (srcName)
+import Link.AST.Expr
+import Link.AST.Expr.Postfix (Postfix (..))
 import Source.Parse (Parse, failParse)
-import Source.Parse.Common (eof, manySep, satisfy, str, str', viewed)
+import Source.Parse.Common (manySep, satisfy, str, str', viewed)
 import Source.Parse.Common.Name (name, name')
-import Source.View (Viewed (..))
+import Source.View (Viewed)
 import Unwrap (unwrap)
-import Prelude hiding (head)
-
-ast :: Parse AST
-ast = asks (AST . srcName) <*> many item <* eof
-
-item :: Parse Item
-item =
-  FnItem <$> fn
-    <|> ExItem <$> extern
-
-extern :: Parse Extern
-extern =
-  Extern
-    <$ str "extern"
-    <*> header
-
-fn :: Parse Fn
-fn = Fn <$> header <*> block
-
-header :: Parse Header
-header = Header <$ str "fn" <*> viewed name <* str "(" <* str ")" <*> pure Void
-
-block :: Parse Block
-block =
-  Block
-    <$ str "{"
-    <*> many stmt
-    <*> (view unwrap <$> expr <|> pure (Atomic Unit))
-    <* str "}"
-
-stmt :: Parse Expr
-stmt = do
-  e <- view unwrap <$> expr
-  e <$ when (needsSemicolon e) (str ";")
 
 expr :: Parse (Viewed Expr)
 expr = foldl' addPostfix . fmap Atomic <$> viewed atom <*> many (viewed postfix)

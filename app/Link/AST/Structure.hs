@@ -1,12 +1,13 @@
--- provides a function to structure Link `AST` into `Program`
 {-# LANGUAGE FlexibleContexts #-}
 
+-- provides a function to structure Link `AST` into `Program`
 module Link.AST.Structure (structure) where
 
 import Combinators (changing)
 import Control.Monad.Except (MonadError)
 import Control.Monad.State (MonadState, execStateT)
-import Link.AST (AST (..), Item)
+import Link.AST (AST (..))
+import Link.AST.Item (Item)
 import Link.AST.Structure.Add (add)
 import Link.AST.Structure.Error (AlreadyExists)
 import Link.Program (Program, empty, items)

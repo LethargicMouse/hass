@@ -10,7 +10,7 @@ module Link.Program.Info (
 import Control.Lens (makeLenses)
 import Data.Map (Map)
 import qualified Data.Map as M
-import Link.AST (Type)
+import Link.AST.Type (Type)
 
 data Info
   = Info

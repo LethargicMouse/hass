@@ -1,6 +1,7 @@
 {-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE TemplateHaskell #-}
 
+-- provides a function to analyse Link `Program` and produce `Program` Info`
 module Link.Compiler.Analyse (analyse, Error, success) where
 
 import Control.Lens (makeLenses, modifying, to, (^.))
@@ -14,7 +15,13 @@ import Data.Hashable (Hashable (hash))
 import Data.Map (Map, elems, insert, (!?))
 import qualified Data.Map as M
 import Enclosed (enclosed)
-import Link.AST (AtomExpr (..), Block (Block), CallExpr (..), Expr (Atomic, Field), Extern, FieldExpr (..), Fn, Header, Item (..), LetExpr (LetExpr), Type (..), body, header, retType)
+import Link.AST.Block (Block (..))
+import Link.AST.Expr (AtomExpr (..), CallExpr (..), Expr (..), FieldExpr (..), LetExpr (..))
+import Link.AST.Extern (Extern)
+import Link.AST.Fn (Fn, body, header)
+import Link.AST.Header (Header, retType)
+import Link.AST.Item (Item (..))
+import Link.AST.Type (Type (..))
 import Link.Program (Program (..), TypeItem (..), fields, items, name, typeItems)
 import Link.Program.Info (Info, empty, types)
 import OfKind (kind)
