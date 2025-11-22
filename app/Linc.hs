@@ -1,68 +1,69 @@
-{-# LANGUAGE LambdaCase #-}
-{-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE FlexibleContexts #-}
+{-# LANGUAGE TypeOperators #-}
 
 module Main where
 
-import Control.Monad.Writer (execWriter, tell)
-import Data.String (fromString)
-import Error (die)
-import Process (call, run)
-import Source (Source, readSource)
-import System.Environment (getArgs)
-import Text (Text, enclosed)
+import Command (call, run)
+import Control.Monad ((>=>))
+import Data.String (IsString (fromString))
+import Effectful (Eff, IOE, runEff, (:>))
+import Effectful.Environment (Environment, getArgs, runEnvironment)
+import Effectful.FileSystem (FileSystem, runFileSystem)
+import Effectful.FileSystem.IO.ByteString (readFile, writeFile)
+import Link.Analyse (analyse)
+import Link.Lex (Code (..), lex)
+import Link.Parse (ast, parse)
+import Qbe.IR (IR)
+import Shorts (Dies, die, die', enclosed, runDeath)
+import Prelude hiding (lex, readFile, writeFile)
 
 main :: IO ()
 main =
-  readCode
-    >>= compile
-    >> runOut
+  runEff $
+    runDeath $
+      runFileSystem (runEnvironment readCode >>= compile)
+        >> postcompile
+        >> runOut
 
-readCode :: IO Code
-readCode = getPath >>= readSource
+process :: (Dies es) => Code -> Eff es IR
+process = lex >=> parse ast >=> analyse
 
-getPath :: IO FilePath
-getPath =
-  getArgs >>= \case
-    [] -> die expectedPath
-    [p] -> return p
-    _ : a : _ -> die (unexpected a)
+compile :: (Dies es, FileSystem :> es) => Code -> Eff es ()
+compile = process >=> dump
 
-expectedPath :: Text
-expectedPath = argsError "expected path to file"
+readCode :: (Environment :> es, Dies es, FileSystem :> es) => Eff es Code
+readCode = getArgs >>= getPath >>= \p -> Code p <$> readFile p
 
-unexpected :: String -> Text
-unexpected a =
-  argsError $ "unexpected argument: " <> enclosed "`" (fromString a)
+getPath :: (Dies es) => [String] -> Eff es FilePath
+getPath [] = die' expectedPath
+getPath [path] = pure path
+getPath (_ : a : _) = die' (unexpectedArgument a)
 
-argsError :: Text -> Text
-argsError e = "! error reading args: " <> e
+expectedPath :: String
+expectedPath = argsError "expected argument"
 
-type Code = Source
+argsError :: String -> String
+argsError = (++) "! error reading args: "
 
-compile :: Code -> IO ()
-compile _ = do
-  dump genIR
-  runQbe
-  runCC
+unexpectedArgument :: String -> String
+unexpectedArgument a = argsError ("unexpected argument: " ++ enclosed "`" a)
 
-dump :: IR -> IO ()
-dump = writeFile "out.qbe" . show
+dump :: (FileSystem :> es) => IR -> Eff es ()
+dump = writeFile outQbe . fromString . show
 
-type IR = Text
+postcompile :: (IOE :> es) => Eff es ()
+postcompile = qbe >> cc
 
-genIR :: IR
-genIR = execWriter $ do
-  tell
-    "export function w $main ( ) {\n\
-    \@start\n\
-    \  ret 0\n\
-    \}"
+outQbe, outS, out :: FilePath
+outQbe = "out.qbe"
+outS = "out.s"
+out = "out"
 
-runQbe :: IO ()
-runQbe = call "qbe" ["-o", "out.s", "out.qbe"]
+qbe :: (IOE :> es) => Eff es ()
+qbe = call "qbe" ["-o", outS, outQbe]
 
-runCC :: IO ()
-runCC = call "cc" ["-o", "out", "out.s"]
+cc :: (IOE :> es) => Eff es ()
+cc = call "cc" ["-o", out, outS]
 
-runOut :: IO ()
-runOut = run "./out" []
+runOut :: (IOE :> es) => Eff es ()
+runOut = run ("./" ++ out) []

@@ -18,16 +18,23 @@ common warnings
 library
     import:           warnings
     exposed-modules:
-        Source,
-        Error,
-        Text,
-        Process
+        Link.Lex,
+        Link.Parse,
+        Link.AST,
+        Link.Analyse,
+        Command,
+        Shorts,
+        DList,
+        Qbe.IR
     hs-source-dirs: src
     build-depends: 
         base, 
         process,
         vector,
-        mtl
+        effectful,
+        containers,
+        lens,
+        bytestring
     default-language: Haskell2010
 
 executable linc
@@ -38,6 +45,8 @@ executable linc
     build-depends:    
         base, 
         hask,
-        mtl
+        effectful,
+        containers,
+        process
     hs-source-dirs:   app
     default-language: Haskell2010
