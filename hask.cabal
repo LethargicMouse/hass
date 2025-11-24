@@ -44,6 +44,8 @@ executable linc
     import:           warnings
     main-is:          Linc.hs
     other-modules:
+        Linc.Args,
+        Linc.Post
     -- other-extensions:
     build-depends:    
         base, 
