@@ -3,9 +3,6 @@
 
 module DList where
 
-import Effectful (Dispatch (..), DispatchOf, Effect)
-import Effectful.Dispatch.Static (SideEffects (..))
-
 newtype DList a = DList {unDList :: [a] -> [a]}
 
 toList :: DList a -> [a]
@@ -19,7 +16,3 @@ dList = DList . (++)
 
 append :: a -> DList a -> DList a
 append a l = l <> dList [a]
-
-data Except :: Effect
-
-type instance DispatchOf Except = Static NoSideEffects

@@ -51,9 +51,13 @@ instance Show Location where
       ++ show s
       ++ ":\n     |"
       ++ showLine (line s) ls
+      ++ underline (symbol s) (symbol s + 1)
 
 showLine :: Int -> Vector ByteString -> String
-showLine n ls = leftpad ' ' 4 (show n) ++ " | " ++ unpack (ls ! n)
+showLine n ls = '\n' : leftpad ' ' 4 (show n) ++ " | " ++ unpack (ls ! n)
+
+underline :: Int -> Int -> String
+underline a b = "\n     |" ++ replicate a ' ' ++ replicate (b - a) '`'
 
 leftpad :: Char -> Int -> String -> String
 leftpad c n s = replicate (n - length s) c ++ s

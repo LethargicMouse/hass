@@ -9,8 +9,10 @@ import DList (DList, append, dList, toList)
 import Effectful (Eff, (:>))
 import Effectful.State.Static.Local (State, execState)
 import Link.AST (AST (..), Call (..), Expr (..))
-import Qbe.IR (AbiType (..), Arg (..), Copy (..), IR (..), Stmt (..), Type (..))
-import qualified Qbe.IR as IR
+import Qbe.IR (IR (..))
+import Qbe.IR.Stmt (Arg (..), Copy (..), Stmt (..))
+import qualified Qbe.IR.Stmt as IR
+import Qbe.IR.Type (AbiType (T), Type (..))
 import Shorts (assign, modifying, use)
 
 data StmtGen

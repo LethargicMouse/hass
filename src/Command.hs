@@ -5,6 +5,7 @@
 
 module Command where
 
+import Data.String (fromString)
 import Effectful (Eff, IOE, MonadIO (liftIO), (:>))
 import Shorts (Dies, die, enclosed, runDeath)
 import System.Exit (ExitCode (..), exitWith)
@@ -20,14 +21,15 @@ call p as =
 failCall :: (Dies es) => FilePath -> [String] -> Int -> String -> String -> Eff es a
 failCall p as c o e =
   die $
-    "! error calling "
-      ++ enclosed "`" (showCommandForUser p as)
-      ++ ": command failed with exit code "
-      ++ show c
-      ++ "\n"
-      ++ block "stdout" o
-      ++ "\n"
-      ++ block "stderr" e
+    fromString $
+      "! error calling "
+        ++ enclosed "`" (showCommandForUser p as)
+        ++ ": command failed with exit code "
+        ++ show c
+        ++ "\n"
+        ++ block "stdout" o
+        ++ "\n"
+        ++ block "stderr" e
 
 block :: String -> String -> String
 block n s =

@@ -25,7 +25,10 @@ library
         Command,
         Shorts,
         DList,
-        Qbe.IR
+        Qbe.IR,
+        Qbe.IR.Stmt,
+        Qbe.IR.Type,
+        Qbe.IR.Value
     hs-source-dirs: src
     build-depends: 
         base, 
@@ -47,6 +50,7 @@ executable linc
         hask,
         effectful,
         containers,
-        process
+        process,
+        bytestring
     hs-source-dirs:   app
     default-language: Haskell2010

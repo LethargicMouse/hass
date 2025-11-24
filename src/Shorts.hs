@@ -11,7 +11,7 @@
 module Shorts where
 
 import Control.Lens (Lens', over, set, view)
-import Data.String (IsString (fromString))
+import Data.String (fromString)
 import Effectful (Dispatch (Static), DispatchOf, Eff, Effect, IOE, (:>))
 import Effectful.Console.ByteString (Console, putStrLn, runConsole)
 import Effectful.Dispatch.Static (SideEffects (WithSideEffects), StaticRep, evalStaticRep, getStaticRep, unsafeEff_)
@@ -21,11 +21,8 @@ import Prelude hiding (putStrLn)
 
 type Dies es = (Console :> es, Exit :> es)
 
-die' :: (Dies es) => String -> Eff es a
-die' e = putStrLn (fromString e) >> exitFailure
-
-die :: (Show e, Dies es) => e -> Eff es a
-die = die' . show
+die :: (Dies es) => String -> Eff es a
+die e = putStrLn (fromString e) >> exitFailure
 
 data Exit :: Effect
 

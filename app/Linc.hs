@@ -14,7 +14,7 @@ import Link.Analyse (analyse)
 import Link.Lex (Code (..), lex)
 import Link.Parse (ast, parse)
 import Qbe.IR (IR)
-import Shorts (Dies, die, die', enclosed, runDeath)
+import Shorts (Dies, die, enclosed, runDeath)
 import Prelude hiding (lex, readFile, writeFile)
 
 main :: IO ()
@@ -35,9 +35,9 @@ readCode :: (Environment :> es, Dies es, FileSystem :> es) => Eff es Code
 readCode = getArgs >>= getPath >>= \p -> Code p <$> readFile p
 
 getPath :: (Dies es) => [String] -> Eff es FilePath
-getPath [] = die' expectedPath
+getPath [] = die expectedPath
 getPath [path] = pure path
-getPath (_ : a : _) = die' (unexpectedArgument a)
+getPath (_ : a : _) = die (unexpectedArgument a)
 
 expectedPath :: String
 expectedPath = argsError "expected argument"
