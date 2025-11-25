@@ -4,10 +4,9 @@
 module Link.Lex where
 
 import Code (Code (..))
-import Data.ByteString.Char8 (unpack)
+import Data.ByteString.Char8 (isPrefixOf, unpack)
 import qualified Data.ByteString.Char8 as BS
 import Data.Vector (fromList)
-import qualified Data.Vector as V
 import Effectful (Eff)
 import Location (Location (..), poses)
 import Shorts (Dies, die, enclosed)
@@ -17,9 +16,11 @@ lex (Code n s) = lex' <*> poses . unpack $ s
  where
   lex' a ps
     | BS.null a = pure [Token Eof loc]
+    | has "fn" = (Token Fn loc :) <$> lex' (BS.drop 2 a) (drop 2 ps)
     | otherwise = die (lexError loc)
    where
-    loc = Location n (V.head ps) ls
+    loc = Location n (head ps) ls
+    has s' = s' `isPrefixOf` a
   ls = fromList (BS.lines s)
 
 lexError :: Location -> String
@@ -39,6 +40,7 @@ data Lexeme
   | Name String
   | Int Int
   | Eof
+  | Fn
   deriving (Eq)
 
 instance Show Lexeme where
@@ -50,3 +52,4 @@ instance Show Lexeme where
     CurR -> "}"
     Name n -> n
     Int i -> show i
+    Fn -> "fn"

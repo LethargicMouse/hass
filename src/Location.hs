@@ -2,11 +2,11 @@ module Location where
 
 import Data.ByteString.Char8 (ByteString, unpack)
 import Data.List (scanl')
-import Data.Vector (Vector, empty, fromList, (!))
+import Data.Vector (Vector, empty, (!))
 import Shorts (enclosed)
 
-poses :: String -> Vector Pos
-poses = fromList . scanl' nextPos startPos
+poses :: String -> [Pos]
+poses = scanl' nextPos startPos
 
 nextPos :: Pos -> Char -> Pos
 nextPos (Pos l _) '\n' = Pos (l + 1) 1
@@ -39,7 +39,7 @@ instance Show Location where
       ++ underline (symbol s) (symbol s + 1)
 
 showLine :: Int -> Vector ByteString -> String
-showLine n ls = '\n' : leftpad ' ' 4 (show n) ++ " | " ++ unpack (ls ! n)
+showLine n ls = '\n' : leftpad ' ' 4 (show n) ++ " | " ++ unpack (ls ! pred n)
 
 underline :: Int -> Int -> String
 underline a b = "\n     |" ++ replicate a ' ' ++ replicate (b - a) '`'
