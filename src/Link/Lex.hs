@@ -3,15 +3,13 @@
 
 module Link.Lex where
 
+import Code (Code (..))
 import Data.ByteString.Char8 (ByteString, unpack)
 import qualified Data.ByteString.Char8 as BS
 import Data.List (scanl')
 import Data.Vector (Vector, empty, fromList, (!))
 import Effectful (Eff)
 import Shorts (Dies, die, enclosed)
-
-data Code
-  = Code String ByteString
 
 lex :: (Dies es) => Code -> Eff es [Token]
 lex (Code n s) = lex' $ zip <$> (++ "\0") <*> poses $ unpack s

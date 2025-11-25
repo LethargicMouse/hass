@@ -18,6 +18,7 @@ common warnings
 library
     import:           warnings
     exposed-modules:
+        Code,
         Link.Lex,
         Link.Parse,
         Link.AST,
