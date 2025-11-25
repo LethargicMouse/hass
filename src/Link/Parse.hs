@@ -11,13 +11,15 @@ module Link.Parse where
 
 import Control.Lens (makeLenses, view)
 import DList (DList, append, dList)
+import Data.Function (on)
 import Effectful (Eff, (:>))
 import Effectful.Error.Static (Error, runErrorNoCallStack, throwError)
 import Effectful.State.Static.Local (State, gets, runState)
 import Link.AST (AST (..), Expr)
 import qualified Link.AST as A
-import Link.Lex (Lexeme (..), Location, Token (..), fakeLocation, start)
-import Shorts (Dies, assign, die, modifying)
+import Link.Lex (Lexeme (..), Token (..))
+import Location (Location (start), fakeLocation)
+import Shorts (Dies, assign, die, modifying, use)
 
 data Parse
   = Parse
@@ -74,19 +76,14 @@ int =
 
 failParse :: (Parses es) => String -> Eff es a
 failParse s = do
-  p <- start <$> locate
-  p' <- gets (start . view errLocation)
-  case compare p p' of
+  p <- gets (location . head . view tokens)
+  p' <- use errLocation
+  let relocate = assign errLocation p
+  case (compare `on` start) p p' of
     LT -> pure ()
-    EQ -> locateErr >> modifying msgs (append s)
-    GT -> locateErr >> assign msgs (dList [s])
+    EQ -> relocate >> modifying msgs (append s)
+    GT -> relocate >> assign msgs (dList [s])
   throwError ()
-
-locateErr :: (State Parse :> es) => Eff es ()
-locateErr = locate >>= assign errLocation
-
-locate :: (State Parse :> es) => Eff es Location
-locate = gets (location . head . view tokens)
 
 initParse :: [Token] -> Parse
 initParse ts = Parse fakeLocation ts (dList [])

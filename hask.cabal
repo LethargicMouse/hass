@@ -19,6 +19,7 @@ library
     import:           warnings
     exposed-modules:
         Code,
+        Location,
         Link.Lex,
         Link.Parse,
         Link.AST,
