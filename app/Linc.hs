@@ -1,40 +1,53 @@
 {-# LANGUAGE DataKinds #-}
 {-# LANGUAGE FlexibleContexts #-}
+{-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE RankNTypes #-}
+{-# LANGUAGE TypeFamilies #-}
 {-# LANGUAGE TypeOperators #-}
 
 module Main where
 
-import Code (Code, getCode)
-import Control.Monad ((>=>))
-import Data.String (IsString (fromString))
+import Command (call, run)
+import Data.ByteString.Builder (Builder)
+import Effect.Exit (Exit, runExit)
+import Effect.File (File, runFile, writeFile)
+import Effect.Stdio (Stdio, runStdio)
 import Effectful (Eff, IOE, runEff, (:>))
-import Effectful.Console.ByteString (Console)
-import Effectful.Environment (Environment, getArgs, runEnvironment)
-import Effectful.FileSystem (FileSystem, runFileSystem)
-import Effectful.FileSystem.IO.ByteString (writeFile)
-import Linc.Args (getPath)
-import Linc.Post (outQbe, postcompile, runOut)
-import Link.Analyse (analyse)
-import Link.Lex (lex)
-import Link.Parse (ast, parse)
-import Qbe.IR (IR)
-import Shorts (Dies, Exit, runDeath)
-import Prelude hiding (lex, readFile, writeFile)
+import Effectful.Process (Process, runProcess)
+import Prelude hiding (writeFile)
 
 main :: IO ()
-main = runApp $ readCode >>= compile >> postcompile >> runOut
+main =
+  runEffs $
+    readCode
+      >>= dump . compile
+      >> postCompile
+      >> runOut
 
-runApp :: Eff '[Console, Exit, FileSystem, Environment, IOE] a -> IO a
-runApp = runEff . runEnvironment . runFileSystem . runDeath
+runEffs :: Eff '[Stdio, File, Exit, Process, IOE] a -> IO a
+runEffs = runEff . runProcess . runExit . runFile . runStdio
 
-process :: (Dies es) => Code -> Eff es IR
-process = lex >=> parse ast >=> analyse
+runOut :: (Process :> es, Exit :> es) => Eff es ()
+runOut = run "./out" []
 
-compile :: (Dies es, FileSystem :> es) => Code -> Eff es ()
-compile = process >=> dump
+readCode :: Eff es Source
+readCode = pure Source
 
-readCode :: (Environment :> es, Dies es, FileSystem :> es) => Eff es Code
-readCode = getArgs >>= getPath >>= getCode
+dump :: (File :> es) => IR -> Eff es ()
+dump = writeFile "out.qbe" . render
 
-dump :: (FileSystem :> es) => IR -> Eff es ()
-dump = writeFile outQbe . fromString . show
+render :: IR -> Builder
+render _ = ""
+
+data Source = Source
+
+data IR
+  = IR
+
+compile :: Source -> IR
+compile = const IR
+
+postCompile :: (Process :> es, Exit :> es, Stdio :> es) => Eff es ()
+postCompile = do
+  call "qbe" ["-o", "out.s", "out.qbe"]
+  call "cc" ["-o", "out", "out.s"]

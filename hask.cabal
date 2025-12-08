@@ -18,19 +18,11 @@ common warnings
 library
     import:           warnings
     exposed-modules:
-        Code,
-        Location,
-        Link.Lex,
-        Link.Parse,
-        Link.AST,
-        Link.Analyse,
+        Effect.Exit,
+        Effect.File,
+        Effect.Stdio,
         Command,
-        Shorts,
-        DList,
-        Qbe.IR,
-        Qbe.IR.Stmt,
-        Qbe.IR.Type,
-        Qbe.IR.Value
+        Render
     hs-source-dirs: src
     build-depends: 
         base, 
@@ -46,8 +38,7 @@ executable linc
     import:           warnings
     main-is:          Linc.hs
     other-modules:
-        Linc.Args,
-        Linc.Post
+        
     -- other-extensions:
     build-depends:    
         base, 
