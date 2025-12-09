@@ -10,6 +10,7 @@ import Data.ByteString.Builder (Builder)
 import Effect.Stdio (Stdio, putStrLn)
 import Effectful (Dispatch (Static), DispatchOf, Eff, Effect, IOE, (:>))
 import Effectful.Dispatch.Static (SideEffects (WithSideEffects), StaticRep, evalStaticRep, getStaticRep, unsafeEff_)
+import Effectful.Error.Static (Error, runErrorNoCallStackWith)
 import System.Exit (ExitCode)
 import qualified System.Exit as SIO
 import Prelude hiding (putStrLn)
@@ -41,5 +42,5 @@ runExit =
       , exitFailureHandler = SIO.exitFailure
       }
 
-die :: (Exit :> es, Stdio :> es) => Builder -> Eff es a
-die s = putStrLn s >> exitFailure
+die :: (Exit :> es, Stdio :> es) => Eff (Error Builder : es) a -> Eff es a
+die = runErrorNoCallStackWith (\e -> putStrLn e >> exitFailure)

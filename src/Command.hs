@@ -7,9 +7,9 @@ module Command where
 
 import Data.ByteString.Builder (Builder, intDec)
 import Data.String (fromString)
-import Effect.Exit (Exit, die, exitWith)
-import Effect.Stdio (Stdio)
+import Effect.Exit (Exit, exitWith)
 import Effectful (Eff, (:>))
+import Effectful.Error.Static (Error, throwError)
 import Effectful.Process (Process, readProcessWithExitCode, showCommandForUser, spawnProcess, waitForProcess)
 import Render (block, quote)
 import System.Exit (ExitCode (..))
@@ -20,12 +20,12 @@ run p as =
     ExitSuccess -> pure ()
     c -> exitWith c
 
-call :: (Process :> es, Exit :> es, Stdio :> es) => FilePath -> [String] -> Eff es ()
+call :: (Process :> es, Error Builder :> es) => FilePath -> [String] -> Eff es ()
 call p as = do
   (c, o, e) <- readProcessWithExitCode p as ""
   case c of
     ExitSuccess -> pure ()
-    ExitFailure c' -> die (callFail p as c' o e)
+    ExitFailure c' -> throwError (callFail p as c' o e)
 
 callFail :: FilePath -> [String] -> Int -> String -> String -> Builder
 callFail p as c o e =
