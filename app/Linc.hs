@@ -9,7 +9,8 @@
 
 module Main where
 
-import Command (call, run)
+import Command (call)
+import qualified Command as C
 import Control.Monad (void)
 import Data.ByteString.Builder (Builder)
 import Data.String (fromString)
@@ -29,6 +30,24 @@ main = runEffs $ do
   Args c <- getArgs
   case c of
     Clean -> clean
+    Run path -> run path
+
+run ::
+  ( File :> es
+  , Error Builder :> es
+  , Process :> es
+  , Exit :> es
+  ) =>
+  FilePath ->
+  Eff es ()
+run p =
+  readSource p
+    >>= dump . compile
+    >> postCompile
+    >> runOut
+
+readSource :: FilePath -> Eff es Source
+readSource _ = pure Source
 
 getArgs :: (Environment :> es, Error Builder :> es) => Eff es Args
 getArgs = E.getArgs >>= liftError . parse
@@ -45,12 +64,16 @@ parse s = runPureEff . runErrorNoCallStack . evalState s $ do
 
 command :: (Error Builder :> es, State [String] :> es) => Eff es Command
 command =
+  expect "command" >>= \case
+    "clean" -> pure Clean
+    "run" -> Run <$> expect "path"
+    c -> throwError_ (unexpected "command" c)
+
+expect :: (Error Builder :> es, State [String] :> es) => Builder -> Eff es String
+expect s =
   get >>= \case
-    [] -> throwError_ expectedCommand
-    c : _ ->
-      modify (drop @String 1) >> case c of
-        "clean" -> pure Clean
-        _ -> throwError_ (unexpected "command" c)
+    [] -> throwError_ (expected s)
+    a : _ -> a <$ modify (drop @String 1)
 
 unexpected :: Builder -> String -> Builder
 unexpected k n =
@@ -63,15 +86,17 @@ unexpected k n =
 argsError :: Builder
 argsError = "! error reading args: "
 
-expectedCommand :: Builder
-expectedCommand = argsError <> "expected command"
+expected :: Builder -> Builder
+expected a = argsError <> "expected " <> a
 
 clean :: (Process :> es) => Eff es ()
 clean = void $ runError @Builder $ call "rm" ["out.qbe", "out.s", "out"]
 
 newtype Args = Args Command
 
-data Command = Clean
+data Command
+  = Clean
+  | Run FilePath
 
 runEffs :: Eff '[Error Builder, Stdio, Exit, Environment, File, Process, IOE] a -> IO a
 runEffs =
@@ -84,7 +109,7 @@ runEffs =
     . die
 
 runOut :: (Process :> es, Exit :> es) => Eff es ()
-runOut = run "./out" []
+runOut = C.run "./out" []
 
 readCode :: Eff es Source
 readCode = pure Source
