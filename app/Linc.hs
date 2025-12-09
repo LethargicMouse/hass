@@ -1,5 +1,6 @@
 {-# LANGUAGE DataKinds #-}
 {-# LANGUAGE FlexibleContexts #-}
+{-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE RankNTypes #-}
 {-# LANGUAGE TypeApplications #-}
@@ -15,28 +16,41 @@ import Data.String (fromString)
 import Effect.Exit (Exit, die, runExit)
 import Effect.File (File, runFile, writeFile)
 import Effect.Stdio (Stdio, runStdio)
-import Effectful (Eff, IOE, runEff, (:>))
+import Effectful (Eff, IOE, runEff, runPureEff, (:>))
 import Effectful.Environment (Environment, runEnvironment)
 import qualified Effectful.Environment as E
-import Effectful.Error.Static (Error, runError, throwError)
+import Effectful.Error.Static (Error, runError, runErrorNoCallStack, throwError_)
 import Effectful.Process (Process, runProcess)
-import Prelude hiding (writeFile)
+import Effectful.State.Static.Local (State, evalState, get, modify)
+import Prelude hiding (error, writeFile)
 
 main :: IO ()
 main = runEffs $ do
-  Args command <- getArgs
-  case command of
+  Args c <- getArgs
+  case c of
     Clean -> clean
 
 getArgs :: (Environment :> es, Error Builder :> es) => Eff es Args
-getArgs = E.getArgs >>= parse
+getArgs = E.getArgs >>= liftError . parse
 
-parse :: (Error Builder :> es) => [String] -> Eff es Args
-parse [] = throwError expectedCommand
-parse ("clean" : o) = case o of
-  [] -> pure (Args Clean)
-  a : _ -> throwError (unexpected "argument" a)
-parse (c : _) = throwError (unexpected "command" c)
+liftError :: (Error e :> es) => Either e a -> Eff es a
+liftError = either throwError_ pure
+
+parse :: [String] -> Either Builder Args
+parse s = runPureEff . runErrorNoCallStack . evalState s $ do
+  c <- command
+  get >>= \case
+    [] -> pure (Args c)
+    a : _ -> throwError_ (unexpected "argument" a)
+
+command :: (Error Builder :> es, State [String] :> es) => Eff es Command
+command =
+  get >>= \case
+    [] -> throwError_ expectedCommand
+    c : _ ->
+      modify (drop @String 1) >> case c of
+        "clean" -> pure Clean
+        _ -> throwError_ (unexpected "command" c)
 
 unexpected :: Builder -> String -> Builder
 unexpected k n =
