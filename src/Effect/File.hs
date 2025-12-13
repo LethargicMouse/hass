@@ -27,6 +27,11 @@ writeFile p b = do
   f <- getStaticRep
   unsafeEff_ (writeFileHandler f p b)
 
+readFile :: (File :> es) => FilePath -> Eff es ByteString
+readFile p = do
+  f <- getStaticRep
+  unsafeEff_ (readFileHandler f p)
+
 runFile :: (IOE :> es) => Eff (File : es) a -> Eff es a
 runFile =
   evalStaticRep

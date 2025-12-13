@@ -24,7 +24,9 @@ library
         Command,
         Render,
         Qbe.IR,
-        Source
+        Source,
+        JSON,
+        Text
     hs-source-dirs: src
     build-depends: 
         base, 
