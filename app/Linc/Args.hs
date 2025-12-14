@@ -14,6 +14,12 @@ import qualified Effectful.Environment as E
 import Effectful.Error.Static (Error, runErrorNoCallStack, throwError_)
 import Effectful.State.Static.Local (State, evalState, get, modify)
 
+newtype Args = Args Command
+
+data Command
+  = Clean
+  | Run FilePath
+
 getArgs :: (Environment :> es, Error Builder :> es) => Eff es Args
 getArgs = E.getArgs >>= liftError . parse
 
@@ -53,9 +59,3 @@ argsError = "! error reading args: "
 
 expected :: Builder -> Builder
 expected a = argsError <> "expected " <> a
-
-newtype Args = Args Command
-
-data Command
-  = Clean
-  | Run FilePath

@@ -25,7 +25,8 @@ library
         Qbe.IR,
         Source,
         JSON,
-        Text
+        Text,
+        Link.Lex
     hs-source-dirs: src
     build-depends: 
         base, 
