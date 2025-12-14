@@ -11,8 +11,8 @@ import Effect.Exit (Exit, exitWith)
 import Effectful (Eff, (:>))
 import Effectful.Error.Static (Error, throwError)
 import Effectful.Process (Process, readProcessWithExitCode, showCommandForUser, spawnProcess, waitForProcess)
-import Render (block, quote)
 import System.Exit (ExitCode (..))
+import Text (block, quote)
 
 run :: (Process :> es, Exit :> es) => FilePath -> [String] -> Eff es ()
 run p as =

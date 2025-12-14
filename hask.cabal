@@ -22,7 +22,6 @@ library
         Effect.File,
         Effect.Stdio,
         Command,
-        Render,
         Qbe.IR,
         Source,
         JSON,
