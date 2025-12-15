@@ -3,6 +3,7 @@
 
 module Text where
 
+import Combinators ((-$), (.:))
 import Data.ByteString.Builder (Builder, charUtf8, intDec)
 import Data.Foldable (fold)
 import Data.List (intersperse)
@@ -14,7 +15,7 @@ text :: (Show a) => a -> Text
 text = render . show
 
 sep :: Text -> [Text] -> Text
-sep c = fold . intersperse c
+sep = fold .: intersperse
 
 quote :: Text -> Text -> Text
 quote q s = q <> s <> q
@@ -30,7 +31,7 @@ block n s =
     <> maybeLn
     <> line full
  where
-  line m = fromString (replicate m '-')
+  line = fromString . (replicate -$ '-')
   pad = 4
   end = full - pad - length n
   full = 40
@@ -49,3 +50,6 @@ instance Render String where
 
 instance Render Char where
   render = charUtf8
+
+instance Render Text where
+  render = id

@@ -6,11 +6,12 @@
 
 module Effect.Exit where
 
+import Combinators ((!.), (-$), (<.))
 import Data.ByteString.Builder (Builder)
 import Effect.Stdio (Stdio, putStrLn)
 import Effectful (Dispatch (Static), DispatchOf, Eff, Effect, IOE, (:>))
 import Effectful.Dispatch.Static (SideEffects (WithSideEffects), StaticRep, evalStaticRep, getStaticRep, unsafeEff_)
-import Effectful.Error.Static (Error, runErrorNoCallStackWith)
+import Effectful.Error.Static (Error)
 import System.Exit (ExitCode)
 import qualified System.Exit as SIO
 import Prelude hiding (putStrLn)
@@ -25,14 +26,10 @@ data instance StaticRep Exit = Exit
   }
 
 exitWith :: (Exit :> es) => ExitCode -> Eff es a
-exitWith c = do
-  e <- getStaticRep
-  unsafeEff_ (exitWithHandler e c)
+exitWith c = unsafeEff_ . (exitWithHandler -$ c) =<< getStaticRep
 
 exitFailure :: (Exit :> es) => Eff es a
-exitFailure = do
-  e <- getStaticRep
-  unsafeEff_ (exitFailureHandler e)
+exitFailure = unsafeEff_ . exitFailureHandler =<< getStaticRep
 
 runExit :: (IOE :> es) => Eff (Exit : es) a -> Eff es a
 runExit =
@@ -43,4 +40,4 @@ runExit =
       }
 
 die :: (Exit :> es, Stdio :> es) => Eff (Error Builder : es) a -> Eff es a
-die = runErrorNoCallStackWith (\e -> putStrLn e >> exitFailure)
+die m = m !. (exitFailure <. putStrLn)

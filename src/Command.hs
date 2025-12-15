@@ -5,6 +5,8 @@
 
 module Command where
 
+import Combinators ((>>=>))
+import Control.Monad ((>=>))
 import Data.ByteString.Builder (Builder, intDec)
 import Data.String (fromString)
 import Effect.Exit (Exit, exitWith)
@@ -15,10 +17,12 @@ import System.Exit (ExitCode (..))
 import Text (block, quote)
 
 run :: (Process :> es, Exit :> es) => FilePath -> [String] -> Eff es ()
-run p as =
-  spawnProcess p as >>= waitForProcess >>= \case
-    ExitSuccess -> pure ()
-    c -> exitWith c
+run = spawnProcess >>=> waitForProcess >=> onFailure exitWith
+
+onFailure :: (Applicative f) => (ExitCode -> f ()) -> ExitCode -> f ()
+onFailure f = \case
+  ExitSuccess -> pure ()
+  c -> f c
 
 call :: (Process :> es, Error Builder :> es) => FilePath -> [String] -> Eff es ()
 call p as = do

@@ -26,7 +26,8 @@ library
         Source,
         JSON,
         Text,
-        Link.Lex
+        Link.Lex,
+        Combinators
     hs-source-dirs: src
     build-depends: 
         base, 

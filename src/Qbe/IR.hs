@@ -13,7 +13,7 @@ data IR
   = IR
 
 instance Render IR where
-  render _ = "export function w $main() {\n@start\nret 0\n}"
+  render = const "export function w $main() {\n@start\nret 0\n}"
 
 dump :: (File :> es) => IR -> Eff es ()
 dump = writeFile "out.qbe" . render

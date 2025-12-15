@@ -5,6 +5,7 @@
 
 module Effect.File where
 
+import Combinators ((-$))
 import Data.ByteString.Builder (Builder)
 import qualified Data.ByteString.Builder as B
 import Data.ByteString.Char8 (ByteString)
@@ -23,14 +24,10 @@ data instance StaticRep File = File
   }
 
 writeFile :: (File :> es) => FilePath -> Builder -> Eff es ()
-writeFile p b = do
-  f <- getStaticRep
-  unsafeEff_ (writeFileHandler f p b)
+writeFile p b = unsafeEff_ . (writeFileHandler -$ p -$ b) =<< getStaticRep
 
 readFile :: (File :> es) => FilePath -> Eff es ByteString
-readFile p = do
-  f <- getStaticRep
-  unsafeEff_ (readFileHandler f p)
+readFile p = unsafeEff_ . (readFileHandler -$ p) =<< getStaticRep
 
 runFile :: (IOE :> es) => Eff (File : es) a -> Eff es a
 runFile =
