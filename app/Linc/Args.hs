@@ -6,13 +6,13 @@
 
 module Linc.Args where
 
-import Data.ByteString.Builder (Builder)
-import Data.String (fromString)
-import Effectful (Eff, runPureEff, (:>))
+import Combinators ((-$))
+import Effectful (Eff, (:>))
 import Effectful.Environment (Environment)
 import qualified Effectful.Environment as E
-import Effectful.Error.Static (Error, runErrorNoCallStack, throwError_)
+import Effectful.Error.Static (Error, throwError_)
 import Effectful.State.Static.Local (State, evalState, get, modify)
+import Text (Text, render)
 
 newtype Args = Args {command :: Command}
 
@@ -20,42 +20,43 @@ data Command
   = Clean
   | Run FilePath
 
-getArgs :: (Environment :> es, Error Builder :> es) => Eff es Args
-getArgs = E.getArgs >>= liftError . parse
+getArgs :: (Environment :> es, Error Text :> es) => Eff es Args
+getArgs = parse =<< E.getArgs
 
-liftError :: (Error e :> es) => Either e a -> Eff es a
-liftError = either throwError_ pure
+parse :: (Error Text :> es) => [String] -> Eff es Args
+parse =
+  evalState -$ do
+    c <- parseCommand
+    \case
+      [] -> pure (Args c)
+      a : _ -> throwError_ (unexpected "argument" a)
+      =<< get
 
-parse :: [String] -> Either Builder Args
-parse s = runPureEff . runErrorNoCallStack . evalState s $ do
-  c <- parseCommand
-  get >>= \case
-    [] -> pure (Args c)
-    a : _ -> throwError_ (unexpected "argument" a)
-
-parseCommand :: (Error Builder :> es, State [String] :> es) => Eff es Command
+parseCommand :: (Error Text :> es, State [String] :> es) => Eff es Command
 parseCommand =
-  expect "command" >>= \case
+  \case
     "clean" -> pure Clean
     "run" -> Run <$> expect "path"
     c -> throwError_ (unexpected "command" c)
+    =<< expect "command"
 
-expect :: (Error Builder :> es, State [String] :> es) => Builder -> Eff es String
+expect :: (Error Text :> es, State [String] :> es) => Text -> Eff es String
 expect s =
-  get >>= \case
+  \case
     [] -> throwError_ (expected s)
     a : _ -> a <$ modify (drop @String 1)
+    =<< get
 
-unexpected :: Builder -> String -> Builder
+unexpected :: Text -> String -> Text
 unexpected k n =
-  argsError
-    <> "unexpected "
-    <> k
-    <> ": "
-    <> fromString n
+  argsError $
+    "unexpected "
+      <> k
+      <> ": "
+      <> render n
 
-argsError :: Builder
-argsError = "! error reading args: "
+argsError :: Text -> Text
+argsError = ("! error reading args: " <>)
 
-expected :: Builder -> Builder
-expected a = argsError <> "expected " <> a
+expected :: Text -> Text
+expected = argsError . ("expected " <>)
