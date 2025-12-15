@@ -14,7 +14,7 @@ import qualified Effectful.Environment as E
 import Effectful.Error.Static (Error, runErrorNoCallStack, throwError_)
 import Effectful.State.Static.Local (State, evalState, get, modify)
 
-newtype Args = Args Command
+newtype Args = Args {command :: Command}
 
 data Command
   = Clean
@@ -28,13 +28,13 @@ liftError = either throwError_ pure
 
 parse :: [String] -> Either Builder Args
 parse s = runPureEff . runErrorNoCallStack . evalState s $ do
-  c <- command
+  c <- parseCommand
   get >>= \case
     [] -> pure (Args c)
     a : _ -> throwError_ (unexpected "argument" a)
 
-command :: (Error Builder :> es, State [String] :> es) => Eff es Command
-command =
+parseCommand :: (Error Builder :> es, State [String] :> es) => Eff es Command
+parseCommand =
   expect "command" >>= \case
     "clean" -> pure Clean
     "run" -> Run <$> expect "path"

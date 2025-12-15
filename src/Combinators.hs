@@ -27,13 +27,17 @@ f $$ r = runReader r f
 f $~ s = evalState s f
 
 (?:) :: Eff (NonDet : es) a -> Eff es a -> Eff es a
-f ?: a = runNonDet OnEmptyKeep f >>= either (const a) pure
+m ?: a = either (const a) pure =<< runNonDet OnEmptyKeep m
 
-(<.) :: (Monad m) => m b -> (t -> m a) -> t -> m b
-m <. f = \x -> m << f x
-
-(<<) :: (Monad m) => m b -> m a -> m b
-b << a = a >> b
+(.>) :: (Monad m) => (t -> m a) -> m b -> t -> m b
+f .> m = \x -> f x >> m
 
 (!.) :: Eff (Error e : es) a -> (e -> Eff es a) -> Eff es a
 m !. f = runErrorNoCallStackWith f m
+
+(!:) :: Eff (Error e : es) a -> Eff es a -> Eff es a
+m !: a = m !. const a
+
+infixl 8 <.>
+(<.>) :: (Functor f) => (b -> c) -> (a -> f b) -> a -> f c
+f <.> g = fmap f . g

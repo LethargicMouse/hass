@@ -1,20 +1,22 @@
 {-# LANGUAGE DataKinds #-}
 {-# LANGUAGE FlexibleContexts #-}
+{-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE TypeApplications #-}
 {-# LANGUAGE TypeOperators #-}
 
 module Main where
 
+import Combinators ((!:), (.>), (<.>))
 import Command (call)
 import qualified Command as C
-import Control.Monad (void)
+import Control.Monad ((<=<))
 import Effect.Exit (Exit, die, runExit)
 import Effect.File (File, runFile)
 import Effect.Stdio (Stdio, runStdio)
 import Effectful (Eff, IOE, runEff, (:>))
 import Effectful.Environment (Environment, runEnvironment)
-import Effectful.Error.Static (Error, runError)
+import Effectful.Error.Static (Error)
 import Effectful.Process (Process, runProcess)
 import Linc.Args (Args (..), Command (..), getArgs)
 import Link.Lex (Token, lex)
@@ -28,22 +30,25 @@ data ASG = ASG
 data AST = AST
 
 main :: IO ()
-main = runEffs $ do
-  Args c <- getArgs
-  case c of
-    Clean -> clean
-    Run path -> run path
+main =
+  runEffs $
+    \case
+      Clean -> clean
+      Run path -> run path
+      . command
+      =<< getArgs
 
 run :: (Error Text :> es, File :> es, Process :> es, Exit :> es) => FilePath -> Eff es ()
-run p =
-  readSource p
-    >>= compile
-    >>= dump
-    >> postCompile
-    >> runOut
+run =
+  (dump <=< compile <=< readSource)
+    .> postCompile
+    .> runOut
 
 clean :: (Process :> es) => Eff es ()
-clean = void $ runError @Text $ call "rm" ["out.qbe", "out.s", "out"]
+clean = ignoreError @Text $ call "rm" ["out.qbe", "out.s", "out"]
+
+ignoreError :: Eff (Error e : es) () -> Eff es ()
+ignoreError m = m !: pure ()
 
 runEffs :: Eff '[Error Text, Stdio, Exit, Environment, File, Process, IOE] a -> IO a
 runEffs =
@@ -53,7 +58,7 @@ runOut :: (Process :> es, Exit :> es) => Eff es ()
 runOut = C.run "./out" []
 
 compile :: (Error Text :> es) => Source -> Eff es IR
-compile = fmap (generate . analyse . parse) . lex
+compile = generate . analyse . parse <.> lex
 
 parse :: [Token] -> AST
 parse _ = AST

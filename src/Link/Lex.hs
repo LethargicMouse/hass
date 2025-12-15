@@ -57,7 +57,7 @@ lexer = do
     else (t :) <$> lexer
 
 failLex :: (Reader Info :> es, State Code :> es, Error Text :> es) => Eff es a
-failLex = locate >>= throwError_ . lexError
+failLex = throwError_ . lexError =<< locate
 
 locate :: (Reader Info :> es, State Code :> es) => Eff es Location
 locate = location <$> asks name <*> gets (head . poses)

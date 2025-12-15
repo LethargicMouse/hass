@@ -6,7 +6,7 @@
 
 module Effect.Exit where
 
-import Combinators ((!.), (-$), (<.))
+import Combinators ((!.), (-$), (.>))
 import Data.ByteString.Builder (Builder)
 import Effect.Stdio (Stdio, putStrLn)
 import Effectful (Dispatch (Static), DispatchOf, Eff, Effect, IOE, (:>))
@@ -40,4 +40,4 @@ runExit =
       }
 
 die :: (Exit :> es, Stdio :> es) => Eff (Error Builder : es) a -> Eff es a
-die m = m !. (exitFailure <. putStrLn)
+die m = m !. (putStrLn .> exitFailure)
