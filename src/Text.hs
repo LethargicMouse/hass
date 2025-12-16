@@ -4,10 +4,12 @@
 module Text where
 
 import Combinators ((-$), (.:))
-import Data.ByteString.Builder (Builder, charUtf8, intDec)
+import Data.ByteString.Builder (Builder, byteString, charUtf8, intDec)
+import Data.ByteString.Char8 (ByteString, length)
 import Data.Foldable (fold)
 import Data.List (intersperse)
 import Data.String (fromString)
+import Prelude hiding (length)
 
 type Text = Builder
 
@@ -20,14 +22,14 @@ sep = fold .: intersperse
 quote :: Text -> Text -> Text
 quote q s = q <> s <> q
 
-block :: String -> String -> Text
+block :: ByteString -> String -> Text
 block n s =
   "\n"
     <> line pad
-    <> quote " " (fromString n)
+    <> quote " " (render n)
     <> line end
     <> "\n"
-    <> fromString s
+    <> render s
     <> maybeLn
     <> line full
  where
@@ -38,6 +40,9 @@ block n s =
   maybeLn
     | null s || last s == '\n' = ""
     | otherwise = "\n"
+
+leftpad :: Int -> ByteString -> Text
+leftpad n s = render (replicate (n - length s) ' ') <> render s
 
 class Render a where
   render :: a -> Text
@@ -53,3 +58,6 @@ instance Render Char where
 
 instance Render Text where
   render = id
+
+instance Render ByteString where
+  render = byteString

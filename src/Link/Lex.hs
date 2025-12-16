@@ -9,18 +9,16 @@ import Combinators (($$), ($~), (?:))
 import Data.ByteString.Char8 (ByteString, isPrefixOf, length, null, unpack)
 import qualified Data.ByteString.Char8 as B
 import Data.List (scanl')
+import Data.String (IsString (fromString))
+import Data.Vector (Vector, (!))
 import Effectful (Eff, (:>))
 import Effectful.Error.Static (Error, throwError_)
 import Effectful.NonDet (NonDet, empty, (<|>))
 import Effectful.Reader.Static (Reader, asks)
 import Effectful.State.Static.Local (State, gets, modify)
-import Source (Source (..))
-import Text (Render (..), Text, quote)
+import Source (Info (..), Source (..))
+import Text (Render (..), Text, leftpad, quote)
 import Prelude hiding (length, null)
-
-newtype Info = Info
-  { name :: Text
-  }
 
 data Code = Code
   { code :: ByteString
@@ -42,7 +40,7 @@ data Lexeme
 data Token = Token
 
 lex :: (Error Text :> es) => Source -> Eff es [Token]
-lex (Source n c) = lexer $$ Info n $~ Code c (getPoses c)
+lex (Source i c) = lexer $$ i $~ Code c (getPoses c)
 
 getPoses :: ByteString -> [Pos]
 getPoses = scanl' nextPos (Pos 1 1) . unpack
@@ -63,10 +61,29 @@ failLex :: (Reader Info :> es, State Code :> es, Error Text :> es) => Eff es a
 failLex = throwError_ . lexError =<< locate
 
 locate :: (Reader Info :> es, State Code :> es) => Eff es Location
-locate = location <$> asks name <*> gets (head . poses)
+locate = location <$> asks name <*> gets (head . poses) <*> asks codeLines
 
-location :: Text -> Pos -> Location
-location n p = quote "`" n <> " at " <> render p
+location :: Text -> Pos -> Vector Text -> Location
+location n p@(Pos l s) ls =
+  quote "`" n
+    <> " at "
+    <> render p
+    <> ":\n     |"
+    <> line l (ls ! pred l)
+    <> underline s (s + 1)
+
+line :: Int -> Text -> Text
+line n s =
+  "\n"
+    <> leftpad 4 (fromString $ show n)
+    <> " | "
+    <> s
+
+underline :: Int -> Int -> Text
+underline s e =
+  "\n     |"
+    <> render (replicate s ' ')
+    <> render (replicate (e - s) '`')
 
 lexError :: Location -> Text
 lexError l =

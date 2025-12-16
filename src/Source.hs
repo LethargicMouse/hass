@@ -3,15 +3,25 @@
 
 module Source where
 
-import Data.ByteString.Char8 (ByteString)
-import Data.String (IsString (fromString))
+import Data.ByteString.Char8 (ByteString, lines)
+import Data.Vector (Vector, fromList)
 import Effect.File (File, readFile)
 import Effectful (Eff, (:>))
-import Text (Text)
-import Prelude hiding (readFile)
+import Text (Text, render)
+import Prelude hiding (lines, readFile)
 
 data Source
-  = Source Text ByteString
+  = Source Info ByteString
+
+data Info = Info
+  { name :: Text
+  , codeLines :: Vector Text
+  }
 
 readSource :: (File :> es) => FilePath -> Eff es Source
-readSource p = Source (fromString p) <$> readFile p
+readSource p = source (render p) <$> readFile p
+
+source :: Text -> ByteString -> Source
+source p s = Source (Info p ls) s
+ where
+  ls = fromList (render <$> lines s)
