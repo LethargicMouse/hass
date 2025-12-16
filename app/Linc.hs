@@ -30,13 +30,20 @@ data ASG = ASG
 data AST = AST
 
 main :: IO ()
-main =
-  runEffs $
-    \case
-      Clean -> clean
-      Run path -> run path
-      . command
-      =<< getArgs
+main = runEffs $ perform . command =<< getArgs
+
+perform ::
+  ( Process :> es
+  , Error Text :> es
+  , File :> es
+  , Exit :> es
+  ) =>
+  Command ->
+  Eff es ()
+perform =
+  \case
+    Clean -> clean
+    Run path -> run path
 
 run :: (Error Text :> es, File :> es, Process :> es, Exit :> es) => FilePath -> Eff es ()
 run =

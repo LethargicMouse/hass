@@ -32,7 +32,11 @@ parse =
       a : _ -> throwError_ (unexpected "argument" a)
       =<< get
 
-parseCommand :: (Error Text :> es, State [String] :> es) => Eff es Command
+parseCommand ::
+  ( Error Text :> es
+  , State [String] :> es
+  ) =>
+  Eff es Command
 parseCommand =
   \case
     "clean" -> pure Clean
@@ -40,7 +44,10 @@ parseCommand =
     c -> throwError_ (unexpected "command" c)
     =<< expect "command"
 
-expect :: (Error Text :> es, State [String] :> es) => Text -> Eff es String
+expect ::
+  (Error Text :> es, State [String] :> es) =>
+  Text ->
+  Eff es String
 expect s =
   \case
     [] -> throwError_ (expected s)
