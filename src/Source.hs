@@ -1,4 +1,5 @@
 {-# LANGUAGE FlexibleContexts #-}
+{-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE TypeOperators #-}
 
 module Source where
@@ -24,4 +25,4 @@ readSource p = source (render p) <$> readFile p
 source :: Text -> ByteString -> Source
 source p s = Source (Info p ls) s
  where
-  ls = fromList (render <$> lines s)
+  ls = fromList $ (render <$> lines s) ++ ["<end of file>"]

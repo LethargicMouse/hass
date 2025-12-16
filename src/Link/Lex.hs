@@ -39,6 +39,10 @@ data Lexeme
   = EOF
   | Fn
   | Name ByteString
+  | ParL
+  | ParR
+  | CurL
+  | CurR
 
 data Token = Token
 
@@ -118,7 +122,13 @@ skip :: (State Code :> es) => Eff es ()
 skip = consume . length . takeWhile isSpace =<< gets code
 
 lexList :: [(ByteString, Lexeme)]
-lexList = [("fn", Fn)]
+lexList =
+  [ ("fn", Fn)
+  , ("(", ParL)
+  , (")", ParR)
+  , ("{", CurL)
+  , ("}", CurR)
+  ]
 
 fromList :: (NonDet :> es, State Code :> es) => [(ByteString, Lexeme)] -> Eff es Token
 fromList [] = empty
