@@ -6,8 +6,9 @@
 module Link.Lex where
 
 import Combinators (($$), ($~), (?:))
-import Data.ByteString.Char8 (ByteString, isPrefixOf, length, null, unpack)
+import Data.ByteString.Char8 (ByteString, isPrefixOf, length, null, takeWhile, unpack)
 import qualified Data.ByteString.Char8 as B
+import Data.Char (isSpace)
 import Data.List (scanl')
 import Data.String (IsString (fromString))
 import Data.Vector (Vector, (!))
@@ -18,7 +19,7 @@ import Effectful.Reader.Static (Reader, asks)
 import Effectful.State.Static.Local (State, gets, modify)
 import Source (Info (..), Source (..))
 import Text (Render (..), Text, leftpad, quote)
-import Prelude hiding (length, null)
+import Prelude hiding (length, null, takeWhile)
 
 data Code = Code
   { code :: ByteString
@@ -92,7 +93,10 @@ lexError l =
     <> "\n--! unexpected token"
 
 next :: (State Code :> es, NonDet :> es) => Eff es Token
-next = fromList lexList
+next = skip >> fromList lexList
+
+skip :: (State Code :> es) => Eff es ()
+skip = consume . length . takeWhile isSpace =<< gets code
 
 lexList :: [(ByteString, Lexeme)]
 lexList = [("fn", Fn)]
