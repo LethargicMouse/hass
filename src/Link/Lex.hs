@@ -6,9 +6,10 @@
 module Link.Lex where
 
 import Combinators (($$), ($~), (?:))
+import Control.Monad (guard)
 import Data.ByteString.Char8 (ByteString, isPrefixOf, length, null, takeWhile, unpack)
 import qualified Data.ByteString.Char8 as B
-import Data.Char (isSpace)
+import Data.Char (isAlpha, isDigit, isSpace)
 import Data.List (scanl')
 import Data.String (IsString (fromString))
 import Data.Vector (Vector, (!))
@@ -37,6 +38,7 @@ instance Render Pos where
 data Lexeme
   = EOF
   | Fn
+  | Name ByteString
 
 data Token = Token
 
@@ -62,7 +64,7 @@ failLex :: (Reader Info :> es, State Code :> es, Error Text :> es) => Eff es a
 failLex = throwError_ . lexError =<< locate
 
 locate :: (Reader Info :> es, State Code :> es) => Eff es Location
-locate = location <$> asks name <*> gets (head . poses) <*> asks codeLines
+locate = location <$> asks sourceName <*> gets (head . poses) <*> asks codeLines
 
 location :: Text -> Pos -> Vector Text -> Location
 location n p@(Pos l s) ls =
@@ -93,7 +95,24 @@ lexError l =
     <> "\n--! unexpected token"
 
 next :: (State Code :> es, NonDet :> es) => Eff es Token
-next = skip >> fromList lexList
+next =
+  skip
+    >> fromList lexList
+      <|> name
+
+name :: (State Code :> es, NonDet :> es) => Eff es Token
+name = do
+  res <- gets (takeWhile isNameChar . code)
+  guard (not $ null res)
+  guard (isNameFirstChar $ B.head res)
+  consume (length res)
+  tok (Name res)
+
+isNameChar :: Char -> Bool
+isNameChar c = isNameFirstChar c || isDigit c
+
+isNameFirstChar :: Char -> Bool
+isNameFirstChar c = isAlpha c || c == '_'
 
 skip :: (State Code :> es) => Eff es ()
 skip = consume . length . takeWhile isSpace =<< gets code

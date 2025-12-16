@@ -14,7 +14,7 @@ data Source
   = Source Info ByteString
 
 data Info = Info
-  { name :: Text
+  { sourceName :: Text
   , codeLines :: Vector Text
   }
 
