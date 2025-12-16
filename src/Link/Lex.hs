@@ -10,12 +10,12 @@ import Control.Monad (guard)
 import Data.ByteString.Char8 (ByteString, isPrefixOf, length, null, takeWhile, unpack)
 import qualified Data.ByteString.Char8 as B
 import Data.Char (isAlpha, isDigit, isSpace)
-import Data.List (scanl')
+import Data.List (scanl', singleton)
 import Data.String (IsString (fromString))
 import Data.Vector (Vector, (!))
 import Effectful (Eff, (:>))
 import Effectful.Error.Static (Error, throwError_)
-import Effectful.NonDet (NonDet, empty, (<|>))
+import Effectful.NonDet (NonDet, empty, many, (<|>))
 import Effectful.Reader.Static (Reader, asks)
 import Effectful.State.Static.Local (State, gets, modify)
 import Source (Info (..), Source (..))
@@ -57,12 +57,12 @@ nextPos (Pos l _) '\n' = Pos (l + 1) 1
 nextPos (Pos l s) _ = Pos l (s + 1)
 
 lexer :: (Reader Info :> es, State Code :> es, Error Text :> es) => Eff es [Token]
-lexer = do
-  t <- next ?: failLex
-  isNull <- gets (null . code)
-  if isNull
-    then pure [t]
-    else (t :) <$> lexer
+lexer = ((++) <$> many next <*> (singleton <$> eof)) ?: failLex
+
+eof :: (State Code :> es, NonDet :> es) => Eff es Token
+eof = do
+  guard . null =<< gets code
+  tok EOF
 
 failLex :: (Reader Info :> es, State Code :> es, Error Text :> es) => Eff es a
 failLex = throwError_ . lexError =<< locate
