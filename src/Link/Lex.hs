@@ -6,16 +6,17 @@
 module Link.Lex where
 
 import Combinators (($$), ($~), (?:))
-import Data.ByteString.Char8 (ByteString, null, unpack)
+import Data.ByteString.Char8 (ByteString, isPrefixOf, length, null, unpack)
+import qualified Data.ByteString.Char8 as B
 import Data.List (scanl')
 import Effectful (Eff, (:>))
 import Effectful.Error.Static (Error, throwError_)
-import Effectful.NonDet (NonDet, empty)
+import Effectful.NonDet (NonDet, empty, (<|>))
 import Effectful.Reader.Static (Reader, asks)
-import Effectful.State.Static.Local (State, gets)
+import Effectful.State.Static.Local (State, gets, modify)
 import Source (Source (..))
 import Text (Render (..), Text, quote)
-import Prelude hiding (null)
+import Prelude hiding (length, null)
 
 newtype Info = Info
   { name :: Text
@@ -34,7 +35,9 @@ type Location = Text
 instance Render Pos where
   render (Pos l s) = render l <> ":" <> render s
 
-data Lexeme = EOF
+data Lexeme
+  = EOF
+  | Fn
 
 data Token = Token
 
@@ -72,7 +75,23 @@ lexError l =
     <> "\n--! unexpected token"
 
 next :: (State Code :> es, NonDet :> es) => Eff es Token
-next = empty
+next = fromList lexList
+
+lexList :: [(ByteString, Lexeme)]
+lexList = [("fn", Fn)]
+
+fromList :: (NonDet :> es, State Code :> es) => [(ByteString, Lexeme)] -> Eff es Token
+fromList [] = empty
+fromList ((s, l) : o) =
+  do
+    c <- gets code
+    if s `isPrefixOf` c
+      then consume (length s) >> tok l
+      else empty
+    <|> fromList o
+
+consume :: (State Code :> es) => Int -> Eff es ()
+consume n = modify $ \(Code s ps) -> Code (B.drop n s) (drop n ps)
 
 tok :: Lexeme -> Eff es Token
 tok = const (pure Token)
